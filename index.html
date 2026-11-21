@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fbf3e9">
+  <title>Neuron — Belajar dengan tutor AI</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"], ["$", "$"]],
+        displayMath: [["\\[", "\\]"], ["$$", "$$"]],
+        processEscapes: true
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fbf3e9;
+      --panel: #fffaf4;
+      --panel-2: #f4e9e1;
+      --line: #ead9cc;
+      --muted: #776f73;
+      --text: #394149;
+      --lime: #76a878;
+      --purple: #8d78ba;
+      --orange: #c97b4b;
+      --red: #bd626a;
+      --blue: #5b91aa;
+      --pink: #c66f91;
+      --teal: #4a9286;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(ellipse at 12% 0%,rgba(201,178,236,.22),transparent 34%),radial-gradient(ellipse at 88% 24%,rgba(170,221,208,.22),transparent 31%),var(--bg); color: var(--text); font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: grid; grid-template-columns: 238px minmax(0, 1fr); min-height: 100vh; max-width: 1600px; margin: auto; }
+    aside { padding: 27px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 100vh; background: rgba(255,250,244,.72); }
+    .brand { display: flex; gap: 11px; align-items: center; padding: 0 12px 30px; font-size: 19px; font-weight: 800; letter-spacing: -.5px; }
+    .brand-mark { width: 35px; height: 35px; border-radius: 12px; background: var(--lime); color: #14180d; display: grid; place-items: center; font-size: 19px; }
+    .brand small { display: block; color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: .5px; }
+    .nav-label { color: #8c7c75; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 12px 12px 8px; text-transform: uppercase; }
+    nav { display: grid; gap: 5px; }
+    .nav-btn { display: flex; align-items: center; gap: 12px; border: 0; background: transparent; color: #6f717b; padding: 11px 12px; border-radius: 11px; text-align: left; }
+    .nav-btn:hover, .nav-btn.active { color: #394149; background: #e9e1f3; }
+    .nav-btn.active { box-shadow: inset 3px 0 var(--lime); }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .side-bottom { margin-top: auto; }
+    .mini-profile { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 13px; display: flex; gap: 10px; align-items: center; }
+    .avatar { width: 36px; height: 36px; flex: none; border-radius: 12px; background: linear-gradient(135deg,#d9f995,#65b98c); color: #162016; display: grid; place-items: center; font-weight: 800; }
+    .avatar img { width:100%;height:100%;object-fit:cover; }
+    .avatar-button { border:0;padding:0;cursor:pointer; }
+    .account-avatar { width:88px;height:88px;border-radius:26px;font-size:30px; }
+    .account-id { color:#6f5a97;font:700 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:1px; }
+    .upload-button { position:relative;display:inline-flex;align-items:center;gap:8px; }
+    .upload-button input { position:absolute;inset:0;opacity:0;width:100%;cursor:pointer; }
+    .account-panel { display:flex;align-items:center;gap:17px;margin-bottom:18px; }
+    .mini-profile strong { display: block; font-size: 12px; }
+    .mini-profile span { display: block; color: var(--muted); font-size: 11px; }
+    main { padding: 26px clamp(20px, 4vw, 52px) 48px; min-width: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
+    .crumb { color: var(--muted); font-size: 12px; }
+    .crumb b { color: var(--text); font-weight: 600; }
+    .top-actions { display: flex; gap: 10px; align-items: center; }
+    .icon-button { border: 1px solid var(--line); background: var(--panel); color: #6f717b; width: 38px; height: 38px; border-radius: 12px; }
+    .content { max-width: 1180px; margin: auto; }
+    .welcome { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 23px; }
+    h1 { font-size: clamp(26px,3vw,34px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -1.1px; }
+    .sub { margin: 0; color: var(--muted); }
+    .date-chip { color: #6f717b; font-size: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 8px 13px; white-space: nowrap; }
+    .grid { display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); gap: 16px; }
+    .card { border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); padding: 20px; min-width: 0; box-shadow: 0 8px 22px rgba(115,81,62,.07); }
+    .card:hover { border-color: #d7c2d6; }
+    .hero { grid-column: span 8; min-height: 280px; padding: 25px; overflow: hidden; position: relative; color: #42434d; background: radial-gradient(ellipse at 84% 24%,rgba(231,165,184,.32),transparent 31%),radial-gradient(ellipse at 75% 100%,rgba(137,196,184,.32),transparent 38%),linear-gradient(115deg,#f3e4db,#e9e4f2 70%); }
+    .hero:after { content: "✦"; position: absolute; right: 43px; top: 28px; color: rgba(255,190,126,.86); font-size: 90px; line-height: 1; transform: rotate(-15deg); text-shadow: 0 0 35px rgba(255,185,106,.3); }
+    .hero-cat { position:absolute; z-index:0; right:8px; bottom:2px; width:clamp(150px,21vw,230px); height:auto; }
+    .eyebrow { color: #668f69; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.3px; }
+    .hero h2 { font-size: clamp(22px,2.4vw,30px); max-width: 62%; line-height: 1.18; letter-spacing: -.8px; margin: 13px 0 8px; position: relative; z-index: 1; }
+    .hero p { color: #64646c; margin: 0 0 19px; max-width: 58%; position: relative; z-index: 1; }
+    .hero .btn { position: relative; z-index: 1; }
+    .home-side-stack { grid-column: span 4; display:grid; align-content:start; align-items:start; gap:12px; }
+    .streak { min-height:0; padding:16px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg,#fff1df,#f7e5df 72%); }
+    .streak-head { display: flex; justify-content: space-between; align-items: center; }
+    .streak-flame { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: #f8ddc8; color: var(--orange); font-size: 19px; }
+    .streak-count { font-size: 34px; font-weight: 800; letter-spacing: -2px; margin-top: 7px; line-height:1.1; }
+    .streak-count small { font-size: 12px; color: #766b6c; font-weight: 500; letter-spacing: 0; }
+    .week { display: flex; justify-content: space-between; margin-top: 9px; }
+    .day { display: grid; justify-items: center; gap: 6px; color: #81787a; font-size: 10px; }
+    .day-mark { width: 25px; height: 25px; border: 1px solid #e1cfc3; border-radius: 50%; display: grid; place-items: center; font-size: 10px; }
+    .day-mark.done { background: #bfed68; color: #1b2511; border-color: #bfed68; }
+    .video-card { padding:15px; background:radial-gradient(ellipse at 100% 0%,rgba(255,117,117,.12),transparent 34%),var(--panel); }
+    .video-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
+    .video-heading h3 { margin:3px 0 0; font-size:14px; }
+    .video-platform { color:#b45353; background:#f9e8e4; border-radius:99px; padding:4px 7px; font-size:9px; white-space:nowrap; }
+    .video-list { display:grid; gap:6px; }
+    .video-link { display:flex; align-items:center; gap:9px; min-width:0; padding:7px; border:1px solid #eee2da; border-radius:11px; color:var(--text); text-decoration:none; background:#fffaf6; transition:transform .15s,border-color .15s,background .15s; }
+    .video-link:hover { transform:translateY(-1px); border-color:#e4b7aa; background:#fff6f1; }
+    .video-link:focus-visible { outline:3px solid rgba(198,111,145,.35); outline-offset:2px; }
+    .video-thumb { width:32px; height:32px; flex:none; display:grid; place-items:center; border-radius:9px; color:#b65353; background:linear-gradient(145deg,#ffe2d8,#f9c8c0); font-size:12px; }
+    .video-info { display:grid; min-width:0; gap:2px; }
+    .video-info strong { font-size:10px; line-height:1.25; }
+    .video-info small { color:var(--muted); font-size:9px; line-height:1.25; }
+    .video-arrow { margin-left:auto; color:#9a7982; font-size:13px; flex:none; }
+    .stat-card { grid-column: span 3; padding: 17px 19px; }
+    .stat-top { color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .stat-icon { font-size: 16px; }
+    .stat-value { font-size: 25px; letter-spacing: -.8px; font-weight: 750; margin-top: 13px; }
+    .stat-note { color: #81787a; font-size: 11px; margin-top: 2px; }
+    .section-heading { display: flex; justify-content: space-between; gap: 15px; align-items: center; margin: 27px 0 13px; }
+    .section-heading h2 { margin: 0; font-size: 17px; letter-spacing: -.3px; }
+    .text-link { border: 0; background: none; color: #668f69; font-size: 12px; }
+    .mode-card { grid-column: span 4; min-height: 161px; display: flex; flex-direction: column; justify-content: space-between; transition: transform .18s,border-color .18s; }
+    .mode-card:hover { transform: translateY(-2px); border-color: #d7c2d6; }
+    .mode-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .mode-icon { width: 39px; height: 39px; border-radius: 12px; display: grid; place-items: center; font-size: 18px; background: linear-gradient(145deg,#eee4f7,#e1f0e5); }
+    .mode-card h3 { margin: 13px 0 3px; font-size: 15px; }
+    .mode-card p { color: var(--muted); margin: 0; font-size: 12px; }
+    .badge { background: #f0e9f2; color: #6e6476; border-radius: 99px; padding: 4px 8px; font-size: 10px; }
+    .badge.green { background: #e5f0e3; color: #4f7952; }
+    .bottom-card { grid-column: span 7; }
+    .friends-card { grid-column: span 5; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .progress-track { height: 8px; background: #e9e1e3; overflow: hidden; border-radius: 10px; margin: 13px 0 8px; }
+    .progress-track span { display: block; height: 100%; background: var(--lime); border-radius: inherit; transition: width .3s; }
+    .small { color: var(--muted); font-size: 11px; }
+    .friend-list { display: grid; gap: 11px; margin-top: 14px; }
+    .friend { display: flex; align-items: center; gap: 10px; }
+    .friend .avatar { width: 32px; height: 32px; border-radius: 10px; background: #ebe2f3; color: #675588; font-size: 11px; }
+    .friend-name { flex: 1; font-size: 12px; }
+    .online { color: #568b65; font-size: 10px; }
+    .btn { border: 0; border-radius: 11px; padding: 10px 15px; background: var(--lime); color: #182010; font-weight: 750; font-size: 12px; transition: filter .15s,transform .15s; }
+    .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .btn.secondary { background: #ece5f2; color: #544d61; border: 1px solid #dcd0e6; }
+    .btn.subtle { background: transparent; color: #587d5b; border: 1px solid #c8d9c2; }
+    .btn:disabled { opacity: .48; cursor: not-allowed; transform: none; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .view-title { margin-bottom: 22px; }
+    .view-title h1 { margin-bottom: 7px; }
+    .two-col { display: grid; grid-template-columns: 1.2fr .8fr; gap: 16px; }
+    .full-card { margin-bottom: 16px; }
+    .lesson-box { min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; background: radial-gradient(ellipse at 90% 15%,rgba(163,139,255,.2),transparent 35%),linear-gradient(145deg,#f0eaf7,#e9f2e8); }
+    .lesson-box h2 { font-size: 25px; margin: 10px 0; }
+    .lesson-box p { max-width: 600px; color: #666b6d; }
+    .timer { font-size: 30px; font-variant-numeric: tabular-nums; font-weight: 750; margin: 4px 0 14px; }
+    .subject-discovery { margin: 28px 0 8px; }
+    .subject-discovery-head, .subject-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .subject-discovery-head { margin-bottom:14px; }
+    .subject-discovery-head h2 { margin:5px 0; font-size:18px; }
+    .subject-discovery-head p { margin:0; }
+    .subject-toolbar { align-items:flex-start; margin-bottom:14px; }
+    .subject-filters { display:flex; flex-wrap:wrap; gap:7px; }
+    .subject-filter { border:1px solid #e4d7cf; border-radius:999px; padding:7px 11px; background:#fffaf4; color:#68636a; font-size:11px; }
+    .subject-filter:hover, .subject-filter.active { color:#55446e; background:#eee6f5; border-color:#d6c6e7; }
+    .subject-search { display:flex; align-items:center; gap:8px; min-width:210px; padding-left:10px; border:1px solid #ddcfc4; border-radius:11px; background:#fffdf9; color:#857b81; }
+    .subject-search input { width:100%; min-width:0; padding:9px 10px 9px 0; border:0; background:transparent; box-shadow:none; }
+    .subject-search input:focus { box-shadow:none; }
+    .subject-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:11px; }
+    .subject-card { --subject-color:var(--blue); border:1px solid color-mix(in srgb,var(--subject-color) 25%,var(--line)); background:linear-gradient(145deg,color-mix(in srgb,var(--subject-color) 12%,var(--panel)),var(--panel) 72%); color:var(--text); border-radius:15px; padding:13px; min-height:92px; text-align:left; transition:transform .18s,border-color .18s,filter .18s; }
+    .subject-card:hover { transform:translateY(-3px); border-color:var(--subject-color); filter:brightness(1.08); }
+    .subject-card .subject-icon { display:block; font-size:19px; margin-bottom:8px; }
+    .subject-card strong { display:block; font-size:12px; line-height:1.35; }
+    .subject-card small { display:block; color:var(--muted); font-size:10px; margin-top:3px; }
+    .subject-result-meta { margin-top:10px; }
+    .subject-picker { display:flex; flex-wrap:wrap; gap:14px; align-items:end; margin-bottom:16px; }
+    .field { display:grid; gap:6px; min-width:180px; flex:1; color:#6f686b; font-size:11px; }
+    select { width:100%; min-width:0; color:var(--text); background:#fffdf9; border:1px solid #ddcfc4; border-radius:10px; padding:10px 12px; }
+    .tutor-card { display:flex; flex-direction:column; min-height:100%; background:radial-gradient(ellipse at 100% 0%,rgba(114,224,203,.11),transparent 35%),var(--panel); }
+    .tutor-heading { display:flex; align-items:center; gap:10px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+    .tutor-mark { width:36px; height:36px; display:grid; place-items:center; border-radius:12px; background:linear-gradient(140deg,#d8c8f2,#bfe2d5); color:#51465c; font-size:18px; }
+    .tutor-heading strong { display:block; }
+    .tutor-heading small { display:block; color:var(--muted); font-size:10px; }
+    .tutor-transcript { display:flex; flex-direction:column; gap:11px; min-height:210px; max-height:330px; overflow:auto; padding:14px 0; }
+    .bubble { max-width:92%; padding:11px 13px; border-radius:14px; font-size:12px; white-space:pre-line; }
+    .bubble.assistant { align-self:flex-start; background:#f0eaf5; color:#4f4b57; border-bottom-left-radius:5px; }
+    .bubble.user { align-self:flex-end; background:#e2eee3; color:#3e5844; border-bottom-right-radius:5px; }
+    .bubble mjx-container[display="true"] { max-width:100%; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+    .bubble.thinking { color:var(--muted); }
+    .ai-thinking { display:flex; align-items:center; gap:4px; }
+    .thinking-dots { display:inline-flex; gap:3px; margin-left:2px; }
+    .thinking-dots i { width:4px; height:4px; border-radius:50%; background:currentColor; animation:thinking-bounce 1.1s infinite ease-in-out; }
+    .thinking-dots i:nth-child(2) { animation-delay:.15s; }
+    .thinking-dots i:nth-child(3) { animation-delay:.3s; }
+    @keyframes thinking-bounce { 0%,60%,100% { opacity:.35; transform:translateY(0); } 30% { opacity:1; transform:translateY(-3px); } }
+    .tutor-prompts { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:11px; }
+    .prompt-chip { border:1px solid #ded2e8; color:#675688; background:#f8f2fa; border-radius:99px; padding:6px 9px; font-size:10px; }
+    .tutor-form { display:flex; gap:8px; }
+    .tutor-form input { width:100%; }
+    .source-note { color:#81787a; font-size:10px; margin:10px 0 0; }
+    .mode-select { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 15px; }
+    .mode-option { text-align: left; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 16px; border-radius: 15px; }
+    .mode-option.selected { border-color: #8d78ba; box-shadow: 0 0 0 1px #8d78ba; background:#f5eff8; }
+    .mode-option strong { display: block; margin: 5px 0 3px; }
+    .mode-option span { color: var(--muted); font-size: 11px; }
+    .callout { border: 1px solid #e5d7b6; background: #fbf3dd; color: #766344; border-radius: 12px; padding: 12px 14px; font-size: 12px; margin: 12px 0; }
+    .form-row { display: flex; gap: 9px; }
+    input { min-width: 0; flex: 1; background: #fffdf9; border: 1px solid #ddcfc4; color: var(--text); border-radius: 10px; padding: 10px 12px; outline: none; }
+    input:focus, select:focus { border-color: #8d78ba; box-shadow: 0 0 0 3px rgba(141,120,186,.14); }
+    .table { width: 100%; border-collapse: collapse; text-align: left; }
+    .table th { color: #81787a; font-size: 10px; letter-spacing: .7px; text-transform: uppercase; padding: 11px 9px; }
+    .table td { border-top: 1px solid var(--line); padding: 12px 9px; font-size: 12px; }
+    .table tr.me td { color: #587d5b; }
+    .table-wrap { overflow-x: auto; }
+    .rank-label { display: inline-flex; gap: 7px; align-items: center; }
+    .rank-gem { color: var(--purple); font-size: 16px; }
+    .game-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .race-clock { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 13px; border-radius:12px; background:#f3eef7; border:1px solid #dfd4e8; margin:15px 0; }
+    .race-clock strong { color:var(--orange); font-size:17px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .race-clock span { color:#6c6570; font-size:11px; }
+    .race-indicator { display:flex; align-items:center; gap:7px; color:#72628c!important; }
+    .race-dot { width:7px; height:7px; border-radius:50%; background:var(--purple); box-shadow:0 0 10px var(--purple); animation:pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity:.35; transform:scale(.75); } }
+    .race-clock.done .race-dot { background:var(--lime); box-shadow:0 0 10px var(--lime); animation:none; }
+    .scoreboard { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 19px 10px; background: #f5eee7; border-radius: 14px; }
+    .score-player { text-align: center; min-width: 90px; }
+    .score-player .avatar { margin: 0 auto 6px; }
+    .score { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .versus { color: var(--muted); font-size: 11px; }
+    .question { margin: 20px 0 14px; font-size: 19px; font-weight: 700; }
+    .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .answer { background: #fffaf4; border: 1px solid #e3d6cb; border-radius: 11px; color: var(--text); padding: 12px; text-align: left; }
+    .answer:hover:not(:disabled) { border-color: var(--lime); }
+    .answer.correct { border-color: #77a97b; background: #e7f2e4; }
+    .answer.wrong { border-color: var(--red); background: #f8e6e5; }
+    .game-status { min-height: 22px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+    .result { text-align: center; padding: 26px 8px; }
+    .result h2 { font-size: 27px; margin: 6px; }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%,20px); opacity: 0; pointer-events: none; transition: .2s; background: #e6f0df; color: #3e6042; padding: 11px 16px; border-radius: 12px; font-weight: 650; z-index: 5; box-shadow: 0 8px 24px rgba(77,59,48,.15); }
+    .toast.show { transform: translate(-50%,0); opacity: 1; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 74px minmax(0,1fr); }
+      aside { padding: 20px 10px; }
+      .brand { justify-content: center; padding: 0 0 25px; }
+      .brand-text, .nav-label, .nav-btn .nav-text, .mini-profile .profile-text { display: none; }
+      .nav-btn { justify-content: center; padding: 12px 5px; }
+      .nav-icon { font-size: 18px; }
+      .mini-profile { justify-content: center; padding: 9px 5px; }
+      .hero { grid-column: span 7; }
+      .home-side-stack { grid-column: span 5; }
+      .hero-cat { width:clamp(145px,22vw,190px); }
+      .hero h2 { max-width:60%; }
+      .hero p { max-width:56%; }
+    }
+    @media (max-width: 650px) {
+      .app { display: block; padding-bottom: 70px; }
+      aside { position: fixed; z-index: 4; bottom: 0; top: auto; left: 0; right: 0; min-height: 0; height: 62px; padding: 5px 10px; border-right: 0; border-top: 1px solid var(--line); background: rgba(255,250,244,.96); }
+      .brand, .side-bottom, .nav-label { display: none; }
+      nav { display: flex; justify-content: space-around; }
+      .nav-btn { flex: 1; flex-direction: column; gap: 2px; padding: 5px 2px; font-size: 9px; }
+      .nav-btn .nav-text { display: block; font-size: 9px; }
+      .nav-btn.active { box-shadow: inset 0 2px var(--lime); }
+      main { padding: 18px 15px 28px; }
+      .topbar { margin-bottom: 22px; }
+      .hero, .home-side-stack, .stat-card, .mode-card, .bottom-card, .friends-card { grid-column: span 12; }
+      .home-side-stack { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .hero { min-height: 235px; }
+      .hero:after { right: 16px; top: 25px; font-size: 75px; opacity: .65; }
+      .hero-cat { width:145px; right:4px; bottom:1px; opacity:.78; }
+      .hero h2 { max-width:64%; }
+      .hero p { max-width:60%; }
+      .streak, .video-card { padding:13px; }
+      .streak-count { font-size:30px; }
+      .streak-count small { font-size:10px; }
+      .week { gap:2px; }
+      .day { flex:1; gap:4px; font-size:8px; }
+      .day-mark { width:20px; height:20px; font-size:9px; }
+      .video-heading { align-items:flex-start; flex-direction:column; gap:4px; }
+      .video-heading h3 { font-size:12px; }
+      .video-platform { font-size:8px; }
+      .video-link { gap:6px; padding:6px; }
+      .video-thumb { width:25px; height:25px; font-size:10px; }
+      .video-info strong { font-size:10px; }
+      .video-info small { font-size:9px; }
+      .stat-card { grid-column: span 6; }
+      .mode-card { min-height: 140px; }
+      .welcome { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .two-col { grid-template-columns: 1fr; }
+      .mode-select { grid-template-columns: 1fr; }
+      .answers { grid-template-columns: 1fr; }
+      .subject-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .subject-discovery-head, .subject-toolbar { align-items:stretch; flex-direction:column; }
+      .subject-search { width:100%; }
+      .race-clock { align-items:flex-start; flex-direction:column; }
+      .card { padding: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand"><div class="brand-mark">✳</div><div class="brand-text">neuron<small>BELAJAR BARENG</small></div></div>
+      <div class="nav-label">Menu utama</div>
+      <nav aria-label="Navigasi utama">
+        <button class="nav-btn active" data-view="home"><span class="nav-icon">⌂</span><span class="nav-text">Beranda</span></button>
+        <button class="nav-btn" data-view="learn"><span class="nav-icon">▤</span><span class="nav-text">Belajar</span></button>
+        <button class="nav-btn" data-view="play"><span class="nav-icon">⚔</span><span class="nav-text">Arena</span></button>
+        <button class="nav-btn" data-view="friends"><span class="nav-icon">♧</span><span class="nav-text">Teman</span></button>
+        <button class="nav-btn" data-view="leaderboard"><span class="nav-icon">♜</span><span class="nav-text">Leaderboard</span></button>
+        <button class="nav-btn" data-view="account"><span class="nav-icon">◉</span><span class="nav-text">Akun</span></button>
+      </nav>
+      <div class="side-bottom">
+        <div class="nav-label">Profil</div>
+        <div class="mini-profile"><div class="avatar" data-profile-avatar>A</div><div class="profile-text"><strong id="side-name">Ari</strong><span id="side-level">Level 1 · SD</span></div></div>
+      </div>
+    </aside>
+    <main>
+      <div class="topbar"><div class="crumb">Neuron <span> / </span> <b id="crumb">Beranda</b></div><div class="top-actions"><button class="icon-button" title="Notifikasi" aria-label="Notifikasi">♧</button><button class="avatar avatar-button" data-goto="account" data-profile-avatar aria-label="Buka akun">A</button></div></div>
+      <div class="content">
+        <section class="view active" id="view-home">
+          <div class="welcome"><div><h1>Belajar sedikit, jadi hebat. <span style="color:var(--lime)">✦</span></h1><p class="sub">Satu langkah kecil hari ini bisa jadi lompatan besar besok.</p></div><div class="date-chip" id="today"></div></div>
+          <div class="grid">
+            <article class="card hero"><div class="eyebrow">Belajar bareng · satu langkah setiap hari</div><h2>Mapel apa pun, pahami dengan caramu.</h2><p>Pilih pelajaran, tanya tutor, lalu pelajari konsep lewat penjelasan dan contoh yang mudah dicerna.</p><button class="btn" data-goto="learn">Mulai belajar <span aria-hidden="true">→</span></button>
+              <svg class="hero-cat" viewBox="0 0 240 220" aria-hidden="true">
+                <path d="M168 176c31 14 49 1 43-16-4-10-17-12-25-3" fill="none" stroke="#f6b26b" stroke-width="12" stroke-linecap="round"/>
+                <path d="M48 91 40 31l50 31a79 79 0 0 1 60 0l50-31-8 63c12 42-15 86-72 91-57-5-84-49-72-94Z" fill="url(#cat-coat)"/>
+                <path d="m53 52 29 18-25 9Zm134 0-29 18 25 9Z" fill="#f3a5a9"/>
+                <path d="M79 105c10-8 20-8 29 0m24 0c9-8 19-8 29 0" fill="none" stroke="#382d3a" stroke-width="6" stroke-linecap="round"/>
+                <path d="m113 121 8 6 8-6-8-5Z" fill="#9e5666"/>
+                <path d="M121 127c-7 12-17 12-22 5m22-5c7 12 17 12 22 5" fill="none" stroke="#593749" stroke-width="3" stroke-linecap="round"/>
+                <path d="M69 126 36 120m34 17-34 2m135-13 33-6m-34 17 34 2" fill="none" stroke="#fff1df" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="185" cy="51" r="5" fill="#fff1b7"/><path d="m203 94 4 9 10 1-8 6 2 10-8-6-8 5 3-9-7-7 10 1Z" fill="#d7a8ff"/>
+                <defs><linearGradient id="cat-coat" x1="40" y1="30" x2="190" y2="190" gradientUnits="userSpaceOnUse"><stop stop-color="#ffd19e"/><stop offset="1" stop-color="#ea8c91"/></linearGradient></defs>
+              </svg>
+            </article>
+            <div class="home-side-stack">
+              <article class="card streak"><div><div class="streak-head"><div class="eyebrow" style="color:var(--orange)">Streak belajar</div><div class="streak-flame" aria-hidden="true">♨</div></div><div class="streak-count"><span id="streak-count">0</span> <small>hari</small></div><div class="small">Belajar hari ini untuk menjaga apimu!</div></div><div class="week" id="week"></div></article>
+              <article class="card video-card">
+                <div class="video-heading"><div><div class="eyebrow">Tonton & belajar</div><h3>Rekomendasi video</h3></div><span class="video-platform">▶ YouTube</span></div>
+                <div class="video-list">
+                  <a class="video-link" href="https://www.youtube.com/results?search_query=trik+hitung+cepat+olimpiade+matematika" target="_blank" rel="noopener noreferrer" aria-label="Cari video trik hitung cepat olimpiade di YouTube">
+                    <span class="video-thumb" aria-hidden="true">▶</span><span class="video-info"><strong>Hitung cepat ala olimpiade</strong><small>Matematika · trik hitung mental</small></span><span class="video-arrow" aria-hidden="true">↗</span>
+                  </a>
+                  <a class="video-link" href="https://www.youtube.com/results?search_query=apa+itu+geografi+materi+dasar" target="_blank" rel="noopener noreferrer" aria-label="Cari video pengantar geografi di YouTube">
+                    <span class="video-thumb" aria-hidden="true">▶</span><span class="video-info"><strong>Geografi itu apa?</strong><small>Geografi · pengantar dasar</small></span><span class="video-arrow" aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              </article>
+            </div>
+            <article class="card stat-card"><div class="stat-top"><span>Level akun</span><span class="stat-icon">✦</span></div><div class="stat-value" id="level-stat">Lv. 1</div><div class="progress-track"><span id="level-progress" style="width:0%"></span></div><div class="stat-note" id="xp-note">0 / 100 XP menuju level berikutnya</div></article>
+            <article class="card stat-card"><div class="stat-top"><span>Rank saat ini</span><span class="stat-icon">♢</span></div><div class="stat-value" id="rank-stat">Warrior</div><div class="stat-note" id="rank-points">0 poin rank</div></article>
+            <article class="card stat-card"><div class="stat-top"><span>Total belajar</span><span class="stat-icon">◷</span></div><div class="stat-value" id="study-stat">0 mnt</div><div class="stat-note">Waktu fokus terkumpul</div></article>
+            <article class="card stat-card"><div class="stat-top"><span>Teman</span><span class="stat-icon">♧</span></div><div class="stat-value" id="friend-count">0</div><div class="stat-note">Teman seperjalananmu</div></article>
+          </div>
+          <section class="subject-discovery">
+            <div class="subject-discovery-head"><div><div class="eyebrow">Ruang belajar</div><h2>Ikuti rasa ingin tahumu</h2><p class="small">Semua mata pelajaran langsung terlihat; saring dengan kategori atau pencarian.</p></div></div>
+            <div class="subject-toolbar"><div class="subject-filters" id="subject-filters"></div><label class="subject-search">⌕ <input id="subject-search" type="search" placeholder="Cari mata pelajaran..." aria-label="Cari mata pelajaran"></label></div>
+            <div class="subject-grid" id="home-subjects"></div>
+            <div class="small subject-result-meta" id="subject-result-meta"></div>
+          </section>
+          <div class="section-heading"><h2>Pilih cara belajarmu</h2><button class="text-link" data-goto="play">Semua mode →</button></div>
+          <div class="grid">
+            <article class="card mode-card" data-goto="learn"><div class="mode-top"><div class="mode-icon">📚</div><span class="badge green">Fokus</span></div><div><h3>Belajar santai</h3><p>Materi ringan, timer fokus, XP untuk tiap sesi.</p></div></article>
+            <article class="card mode-card" data-goto="play"><div class="mode-top"><div class="mode-icon">⚔️</div><span class="badge">Naik rank</span></div><div><h3>Arena ranked</h3><p>Uji kemampuan dan kumpulkan poin rank.</p></div></article>
+            <article class="card mode-card" data-goto="play"><div class="mode-top"><div class="mode-icon">🤖</div><span class="badge">Latihan</span></div><div><h3>Tantang bot</h3><p>Pilih tingkat bot, makin tinggi makin menantang.</p></div></article>
+            <article class="card bottom-card">
+              <div class="row"><div><div class="eyebrow">Target progres</div><h3 style="margin:7px 0 0">Waktunya konsisten</h3></div><span class="badge" id="weekly-badge">0 / 60 menit</span></div>
+              <div class="progress-track"><span id="weekly-progress" style="width:0%"></span></div><div class="small">Selesaikan sesi belajar untuk mencapai target 60 menit pertamamu.</div>
+            </article>
+            <article class="card friends-card"><div class="row"><div><h3 style="margin:0">Teman belajar</h3><div class="small">Semangat tumbuh bareng</div></div><button class="text-link" data-goto="friends">Lihat semua →</button></div><div class="friend-list" id="home-friends"></div></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-learn">
+          <div class="view-title"><h1>Belajar bareng tutor AI</h1><p class="sub">Pilih mapel dan tingkat kelas, lalu tanya sampai benar-benar paham.</p></div>
+          <div class="subject-picker card">
+            <label class="field">Mata pelajaran<select id="subject-select" aria-label="Pilih mata pelajaran"></select></label>
+            <label class="field">Tingkat belajar<select id="grade-select"><option>SD</option><option>SMP</option><option selected>SMA/SMK</option><option>Kuliah</option></select></label>
+            <span class="badge green">Bisa bertanya dengan bahasamu sendiri</span>
+          </div>
+          <div class="two-col">
+            <article class="card lesson-box">
+              <div class="eyebrow" id="lesson-eyebrow">MATERI PILIHAN</div>
+              <h2 id="lesson-title">Pilih mata pelajaran</h2>
+              <p id="lesson-description">Belajar dimulai dari hal yang ingin kamu pahami hari ini.</p>
+              <div class="callout" id="lesson-example">Pilih mapel untuk melihat ringkasan materi dan contoh.</div>
+              <div class="small">Timer fokus belajar</div><div class="timer" id="timer">00:00</div>
+              <div class="row"><button class="btn" id="study-toggle">Mulai sesi</button><span class="small">Sesi selesai memberi XP</span></div>
+            </article>
+            <article class="card tutor-card">
+              <div class="tutor-heading"><div class="tutor-mark">✦</div><div><strong>Tanya Tutor</strong><small id="tutor-subject-label">Teman belajar interaktif</small></div><span class="badge" style="margin-left:auto">AI</span></div>
+              <div class="tutor-transcript" id="tutor-transcript" aria-live="polite"><div class="bubble assistant">Hai! Pilih mata pelajaran, lalu tanyakan konsep atau kirim soal. Aku akan bantu menguraikannya langkah demi langkah.</div></div>
+              <div class="tutor-prompts"><button class="prompt-chip" data-tutor-suggestion="Jelaskan konsep ini dengan sederhana">Jelaskan sederhana</button><button class="prompt-chip" data-tutor-suggestion="Beri aku contoh soal">Beri contoh</button><button class="prompt-chip" data-tutor-suggestion="Buat ringkasan singkat">Ringkas</button></div>
+              <form class="tutor-form" id="tutor-form"><input id="tutor-input" maxlength="400" placeholder="Tulis pertanyaan atau soal..." aria-label="Tanya tutor"><button class="btn" aria-label="Kirim pertanyaan">Kirim</button></form>
+              <p class="source-note">Jawaban dibuat lewat server lokal. Atur OPENROUTER_API_KEY dan kedua pilihan model di file .env server; kunci tidak dikirim ke browser.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-play">
+          <div class="view-title"><h1>Adu cepat jawab soal</h1><p class="sub">Kamu dan lawan mulai menjawab bersamaan. Siapa cepat, dia dapat poin.</p></div>
+          <div id="arena-select">
+            <div class="mode-select">
+              <button class="mode-option selected" data-mode="rank"><span>♢ RANKED</span><strong>Kejar rank tertinggi</strong><span>XP akun + poin rank</span></button>
+              <button class="mode-option" data-mode="fun"><span>✦ FUN</span><strong>Main tanpa tekanan</strong><span>XP akun saja, tanpa poin rank</span></button>
+              <button class="mode-option" data-mode="bot"><span>🤖 BOT</span><strong>Latihan lawan bot</strong><span>Bot makin cepat sesuai rank</span></button>
+            </div>
+            <div class="card">
+              <div class="row"><div><h2 id="mode-title" style="margin:0 0 5px;font-size:19px">Ranked 1v1</h2><p class="sub" id="mode-description">Menang untuk mendapat poin rank dan XP akun.</p></div><button class="btn" id="start-game">Mulai pertandingan →</button></div>
+              <label class="field" style="margin-top:16px;max-width:380px">Mata pelajaran duel<select id="game-subject" aria-label="Pilih mata pelajaran duel"></select></label>
+              <div class="callout" id="multiplayer-note">⚠️ Prototipe lokal: lawan ditampilkan sebagai simulasi. Multiplayer manusia sungguhan memerlukan server dan matchmaking.</div>
+              <div id="bot-options" class="row small" style="display:none;margin:12px 0"><label for="bot-rank">Tingkat bot</label><select id="bot-rank"></select></div>
+              <div class="row small"><span>Aturan pertandingan</span><span>Min. 15 soal · unggul 2 poin · 2 jawaban benar beruntun</span></div>
+            </div>
+          </div>
+          <div id="game-area" style="display:none"></div>
+        </section>
+
+        <section class="view" id="view-friends">
+          <div class="view-title"><h1>Teman belajar</h1><p class="sub">Tambah teman dan tumbuh bersama.</p></div>
+          <div class="two-col">
+            <article class="card"><div class="eyebrow">Komunitasmu</div><h2 style="margin:7px 0 4px">Tambah lewat ID akun</h2><p class="small" style="margin:0 0 17px">ID unik tetap membedakan teman yang memiliki nama sama.</p><form class="friend-list" id="friend-form"><input id="friend-input" placeholder="ID teman · NRN-XXXXXXXXXX" maxlength="14" aria-label="ID akun teman" required><input id="friend-alias" placeholder="Nama tampilan (opsional)" maxlength="24" aria-label="Nama tampilan teman"><button class="btn" style="justify-self:start">Tambah teman</button></form><p class="source-note">Mode lokal: ID tersimpan di perangkat ini. Pencarian akun lintas perangkat memerlukan server.</p></article>
+            <article class="card"><div class="eyebrow">Level kamu</div><div class="stat-value" id="friend-level">Lv. 1</div><div class="progress-track"><span id="friend-level-progress" style="width:0%"></span></div><div class="small" id="friend-xp-note">Terus belajar untuk naik level.</div></article>
+          </div>
+          <div class="section-heading"><h2>Daftar teman</h2><span class="small" id="friends-total">0 teman</span></div>
+          <article class="card"><div class="friend-list" id="all-friends"></div></article>
+        </section>
+
+        <section class="view" id="view-account">
+          <div class="view-title"><h1>Akun saya</h1><p class="sub">Kelola profil dan bagikan ID unik agar teman mudah menemukanmu.</p></div>
+          <div class="two-col">
+            <article class="card">
+              <div class="account-panel"><div class="avatar account-avatar" data-profile-avatar>A</div><div><div class="eyebrow">Profil belajar</div><h2 id="account-display-name" style="margin:5px 0">Ari</h2><div class="account-id" id="account-id">NRN-XXXXXXXXXX</div></div></div>
+              <button class="btn subtle" id="copy-account-id" type="button">Salin ID akun</button>
+              <label class="btn secondary upload-button" style="margin-left:7px">Ganti foto<input id="avatar-upload" type="file" accept="image/*" aria-label="Pilih foto profil"></label>
+            </article>
+            <article class="card"><div class="eyebrow">Identitasmu</div><h3 style="margin:8px 0">Nama boleh sama</h3><p class="small">ID akunmu tetap berbeda dan menjadi identitas utama saat menambah teman. Ubah nama tanpa kehilangan progres.</p><form id="profile-form" class="friend-list"><label class="field">Nama tampilan<input id="profile-name" maxlength="24" required></label><button class="btn" style="justify-self:start">Simpan profil</button></form></article>
+          </div>
+        </section>
+
+        <section class="view" id="view-leaderboard">
+          <div class="view-title"><h1>Leaderboard</h1><p class="sub">Rayakan progres, bukan cuma posisi.</p></div>
+          <div class="mode-select"><button class="mode-option selected" data-board="rank"><span>♢ KOMPETITIF</span><strong>Rank tertinggi</strong><span>100 pemain teratas</span></button><button class="mode-option" data-board="study"><span>◷ KONSISTENSI</span><strong>Waktu belajar</strong><span>Total menit fokus</span></button></div>
+          <article class="card"><div class="row" style="margin-bottom:8px"><div><h2 id="board-title" style="font-size:18px;margin:0">Top 100 · Rank</h2><div class="small" id="board-sub">Pemain dengan poin rank tertinggi</div></div><span class="badge green">Musim berjalan</span></div><div class="callout">Preview lokal: daftar pemain berisi data contoh. Progres akunmu tersimpan di perangkat ini.</div><div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Pemain</th><th id="board-kind">Rank</th><th>Level</th></tr></thead><tbody id="board-rows"></tbody></table></div></article>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const KEY = "neuron-learning-v1";
+    const ranks = ["SD", "SMP", "SMA", "Mahasiswa", "Pakar", "Ilmuwan"];
+    const botResponseTimes = [2800,2250,1750,1300,900,650];
+    const botCorrectRates = [.42,.52,.62,.73,.84,.92];
+    function createAccountId() {
+      const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const bytes=new Uint8Array(10);
+      if(window.crypto&&window.crypto.getRandomValues)window.crypto.getRandomValues(bytes);
+      else for(let i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+      return "NRN-"+Array.from(bytes,byte=>alphabet[byte%alphabet.length]).join("");
+    }
+    const state = loadState();
+    const subjects = [
+      {id:"math",name:"Matematika",icon:"➗",color:"#c4a4ff",summary:"Matematika membantu kita melihat pola, hubungan, dan cara menyelesaikan masalah.",example:"Contoh: persamaan 2x + 5 = 17 diselesaikan dengan mengisolasi x.",steps:"Tulis yang diketahui, pilih operasi yang sesuai, lalu cek kembali hasilnya."},
+      {id:"indonesian",name:"Bahasa Indonesia",icon:"✍️",color:"#ff92bd",summary:"Bahasa Indonesia melatih kita memahami, menilai, dan menyampaikan gagasan dengan jelas.",example:"Gagasan utama biasanya merangkum inti paragraf, bukan sekadar mengulang satu kalimat.",steps:"Cari topik yang dibahas, tandai kalimat kunci, lalu simpulkan dengan kata-katamu."},
+      {id:"english",name:"Bahasa Inggris",icon:"🔤",color:"#79c7ff",summary:"Belajar bahasa Inggris mencakup kosakata, tata bahasa, membaca, mendengar, dan berbicara.",example:"Pada simple present, subjek he/she/it biasanya memakai kata kerja berakhiran -s.",steps:"Perhatikan subjek dan penanda waktu, lalu cocokkan dengan pola kalimatnya."},
+      {id:"ipa",name:"IPA Terpadu",icon:"🔬",color:"#72e0cb",summary:"IPA menghubungkan pengamatan tentang makhluk hidup, materi, energi, dan lingkungan.",example:"Mengamati, membuat dugaan, menguji, lalu menyimpulkan adalah alur penyelidikan sederhana.",steps:"Mulai dari gejala yang diamati, tanyakan sebabnya, lalu cari bukti yang bisa diuji."},
+      {id:"physics",name:"Fisika",icon:"⚡",color:"#ffb96a",summary:"Fisika menjelaskan gerak, gaya, energi, gelombang, dan gejala alam melalui model.",example:"Jika benda menempuh 100 meter dalam 20 detik, kelajuan rata-ratanya 5 m/s.",steps:"Gambar situasinya, catat besaran dan satuannya, kemudian pilih hubungan yang tepat."},
+      {id:"chemistry",name:"Kimia",icon:"⚗️",color:"#a8dd76",summary:"Kimia mempelajari susunan, sifat, perubahan materi, dan interaksi antarpartikel.",example:"Larutan dengan pH 3 bersifat asam karena pH-nya kurang dari 7.",steps:"Tentukan zat dan kondisi reaksinya, susun persamaan, lalu periksa jumlah atom."},
+      {id:"biology",name:"Biologi",icon:"🌱",color:"#8cda8c",summary:"Biologi mempelajari kehidupan, mulai dari sel hingga ekosistem.",example:"Mitokondria membantu sel melepaskan energi dari zat makanan.",steps:"Kenali struktur atau prosesnya, urutkan tahapnya, lalu hubungkan dengan fungsinya."},
+      {id:"history",name:"Sejarah",icon:"🏺",color:"#e5b57a",summary:"Sejarah menelaah peristiwa masa lalu melalui sumber, konteks, sebab, dan akibat.",example:"Proklamasi kemerdekaan Indonesia dibacakan pada 17 Agustus 1945.",steps:"Susun kronologi, periksa sumber, lalu bedakan penyebab dan dampak peristiwa."},
+      {id:"geography",name:"Geografi",icon:"🌍",color:"#72d8d0",summary:"Geografi mengkaji tempat, lingkungan, dan hubungan manusia dengan ruang.",example:"Garis khatulistiwa membagi Bumi menjadi belahan utara dan selatan.",steps:"Lihat lokasi dan skalanya, kenali faktor alam-manusia, lalu jelaskan keterkaitannya."},
+      {id:"economics",name:"Ekonomi",icon:"📈",color:"#85c8ff",summary:"Ekonomi membahas pilihan manusia saat sumber daya terbatas dan kebutuhan beragam.",example:"Biaya peluang adalah nilai pilihan terbaik yang dikorbankan.",steps:"Kenali kebutuhan dan sumber daya, bandingkan pilihan, lalu jelaskan konsekuensinya."},
+      {id:"sociology",name:"Sosiologi",icon:"👥",color:"#f39abe",summary:"Sosiologi mempelajari hubungan sosial, kelompok, nilai, dan perubahan masyarakat.",example:"Kerja bakti adalah contoh kerja sama sosial di lingkungan.",steps:"Identifikasi pelaku dan situasi, amati pola hubungan, lalu kaitkan dengan konsep sosial."},
+      {id:"civics",name:"PPKn",icon:"🤝",color:"#ff9a83",summary:"PPKn mengajak kita memahami hak, kewajiban, konstitusi, dan kehidupan demokratis.",example:"Musyawarah mencari keputusan bersama dengan menghargai pendapat peserta.",steps:"Tentukan hak atau aturan yang terkait, lihat sudut pandang pihak lain, lalu cari solusi adil."},
+      {id:"informatics",name:"Informatika",icon:"💻",color:"#96a8ff",summary:"Informatika melatih berpikir komputasional, mengolah data, dan memahami teknologi digital.",example:"Algoritma adalah urutan langkah logis untuk menyelesaikan masalah.",steps:"Uraikan masalah, pecah menjadi bagian kecil, susun langkah, dan uji hasilnya."},
+      {id:"religion",name:"Pendidikan Agama",icon:"🕊️",color:"#e6ce84",summary:"Pendidikan Agama mengajak memahami ajaran, nilai, refleksi diri, dan sikap saling menghormati.",example:"Menghargai perbedaan dan berlaku jujur merupakan nilai penting dalam kehidupan bersama.",steps:"Pahami konteks ajarannya, renungkan nilai yang dibahas, lalu hubungkan dengan tindakan sehari-hari."},
+      {id:"arabic",name:"Bahasa Arab",icon:"🗣️",color:"#87dbbe",summary:"Bahasa Arab mempelajari kosakata, susunan kalimat, membaca, dan percakapan.",example:"Urutan kata dan harakat dapat mengubah fungsi kata dalam kalimat Arab.",steps:"Kenali kosakata, perhatikan posisi kata, lalu baca kalimat dengan konteksnya."},
+      {id:"arts",name:"Seni Budaya",icon:"🎨",color:"#ff91c8",summary:"Seni Budaya mengembangkan apresiasi dan ekspresi melalui karya, musik, tari, dan tradisi.",example:"Tempo menunjukkan cepat atau lambatnya ketukan dalam musik.",steps:"Amati unsur karya, perhatikan teknik dan konteks budaya, lalu sampaikan interpretasimu."},
+      {id:"pe",name:"PJOK",icon:"🏃",color:"#ffb86e",summary:"PJOK membahas kebugaran, keterampilan gerak, kesehatan, dan sportivitas.",example:"Pemanasan bertahap membantu tubuh bersiap sebelum aktivitas intensif.",steps:"Pahami tujuan gerakan, lakukan dengan teknik aman, lalu evaluasi kondisi tubuh."},
+      {id:"craft",name:"Prakarya",icon:"🧵",color:"#d5a5ff",summary:"Prakarya menggabungkan kreativitas, keterampilan, bahan, dan proses membuat produk.",example:"Sebelum membuat produk, tentukan kebutuhan pengguna dan bahan yang tersedia.",steps:"Rancang ide, pilih bahan aman, buat prototipe, kemudian uji dan perbaiki."},
+      {id:"regional",name:"Bahasa Daerah",icon:"💬",color:"#f2a283",summary:"Bahasa Daerah merawat bahasa dan budaya setempat; materi dapat disesuaikan dengan daerahmu.",example:"Unggah-ungguh atau tingkat tutur pada beberapa bahasa dipilih sesuai lawan bicara.",steps:"Sebutkan bahasa atau daerah yang dipelajari, lalu bandingkan kosakata dan konteks pemakaiannya."},
+      {id:"ips",name:"IPS Terpadu",icon:"🧭",color:"#f0c16e",summary:"IPS menghubungkan sejarah, geografi, ekonomi, dan kehidupan sosial.",example:"Perubahan jalur perdagangan dapat memengaruhi kota, pekerjaan, dan budaya setempat.",steps:"Lihat peristiwa dari sisi ruang, waktu, ekonomi, dan masyarakat."},
+      {id:"entrepreneurship",name:"Kewirausahaan",icon:"💡",color:"#ff9c78",summary:"Kewirausahaan mengubah kebutuhan menjadi gagasan, produk, atau layanan yang bermanfaat.",example:"Riset sederhana membantu menguji apakah calon pengguna benar-benar membutuhkan ide kita.",steps:"Temukan masalah, kenali pengguna, uji solusi kecil, lalu perbaiki berdasarkan umpan balik."}
+    ];
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+        const friends=Array.isArray(saved.friends)?saved.friends.map(friend=>typeof friend==="string"?{id:createAccountId(),name:friend}:{id:friend.id||createAccountId(),name:friend.name||"Teman"}):[];
+        return { name: saved.name || "Ari", accountId:saved.accountId||createAccountId(), avatarData:saved.avatarData||"", xp: saved.xp || 0, rankPoints: saved.rankPoints || 0, streak: saved.streak || 0, lastStudy: saved.lastStudy || "", studyMinutes: saved.studyMinutes || 0, friends };
+      } catch (error) {
+        console.error("Gagal membaca progres tersimpan:", error);
+        return { name: "Ari", accountId:createAccountId(), avatarData:"", xp: 0, rankPoints: 0, streak: 0, lastStudy: "", studyMinutes: 0, friends: [] };
+      }
+    }
+    save();
+    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+    function level() { return Math.floor(state.xp / 100) + 1; }
+    function rankIndex() { return Math.min(ranks.length - 1, Math.floor(state.rankPoints / 100)); }
+    function rankName(points) { return ranks[Math.min(ranks.length - 1, Math.floor(points / 100))]; }
+    function addXp(amount) { state.xp += amount; save(); renderStats(); }
+    function renderStats() {
+      const currentLevel = level(), intoLevel = state.xp % 100;
+      document.getElementById("level-stat").textContent = "Lv. " + currentLevel;
+      document.getElementById("level-progress").style.width = intoLevel + "%";
+      document.getElementById("xp-note").textContent = intoLevel + " / 100 XP menuju level berikutnya";
+      document.getElementById("rank-stat").textContent = rankName(state.rankPoints);
+      document.getElementById("rank-points").textContent = state.rankPoints + " poin rank";
+      document.getElementById("study-stat").textContent = state.studyMinutes + " mnt";
+      document.getElementById("friend-count").textContent = state.friends.length;
+      document.getElementById("side-name").textContent = state.name;
+      document.getElementById("side-level").textContent = "Level " + currentLevel + " · " + rankName(state.rankPoints);
+      renderProfile();
+      document.getElementById("friend-level").textContent = "Lv. " + currentLevel;
+      document.getElementById("friend-level-progress").style.width = intoLevel + "%";
+      document.getElementById("friend-xp-note").textContent = intoLevel + " / 100 XP menuju level berikutnya";
+      document.getElementById("weekly-badge").textContent = Math.min(60,state.studyMinutes) + " / 60 menit";
+      document.getElementById("weekly-progress").style.width = Math.min(100,state.studyMinutes / 60 * 100) + "%";
+      document.getElementById("streak-count").textContent = state.streak;
+      renderWeek(); renderFriends();
+    }
+    function renderWeek() {
+      const dayNames = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+      const today = new Date();
+      const active = state.lastStudy === localDate(today);
+      const days = [];
+      for (let i=6;i>=0;i--) {
+        const d = new Date(today); d.setDate(today.getDate()-i);
+        days.push('<div class="day"><span>'+dayNames[d.getDay()]+'</span><span class="day-mark '+(i===0&&active?"done":"")+'">'+(i===0&&active?"✓":"·")+'</span></div>');
+      }
+      document.getElementById("week").innerHTML = days.join("");
+    }
+    function localDate(d) { return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    function renderFriends() {
+      const html = state.friends.length ? state.friends.map(friend=>'<div class="friend"><div class="avatar">'+escapeHtml(friend.name.slice(0,1).toUpperCase())+'</div><div class="friend-name">'+escapeHtml(friend.name)+'<div class="small">'+escapeHtml(friend.id)+'</div></div><span class="online">● Teman</span></div>').join("") : '<div class="small">Belum ada teman. Tambahkan lewat ID akun.</div>';
+      document.getElementById("home-friends").innerHTML = state.friends.slice(0,3).map(friend=>'<div class="friend"><div class="avatar">'+escapeHtml(friend.name.slice(0,1).toUpperCase())+'</div><div class="friend-name">'+escapeHtml(friend.name)+'</div><span class="online">●</span></div>').join("") || '<div class="small">Tambahkan teman lewat ID akun.</div>';
+      document.getElementById("all-friends").innerHTML = html;
+      document.getElementById("friends-total").textContent = state.friends.length + " teman";
+    }
+    function renderProfile() {
+      document.getElementById("account-display-name").textContent=state.name;
+      document.getElementById("account-id").textContent=state.accountId;
+      document.getElementById("profile-name").value=state.name;
+      document.querySelectorAll("[data-profile-avatar]").forEach(avatar=>{
+        avatar.textContent="";
+        if(state.avatarData) {
+          const image=document.createElement("img");
+          image.src=state.avatarData; image.alt="Foto profil "+state.name;
+          avatar.appendChild(image);
+        } else avatar.textContent=state.name.slice(0,1).toUpperCase();
+      });
+    }
+    function escapeHtml(text) { return text.replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
+    function typesetMath(element) {
+      if(!window.MathJax||typeof window.MathJax.typesetPromise!=="function")return;
+      window.MathJax.typesetPromise([element]).catch(error=>console.warn("LaTeX tidak dapat dirender:",error));
+    }
+    async function apiPost(path,payload,signal) {
+      if(location.protocol==="file:") {
+        throw new Error("Halaman masih dibuka langsung dari file. Jalankan start-neuron.bat, lalu buka http://127.0.0.1:8000.");
+      }
+      let response;
+      try {
+        response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal});
+      } catch(error) {
+        if(error.name==="AbortError")throw error;
+        throw new Error("Server AI tidak terjangkau. Periksa koneksi internet atau coba lagi.");
+      }
+      let result;
+      try { result=await response.json(); }
+      catch(error) { throw new Error("Server AI mengirim respons yang tidak dapat dibaca."); }
+      if(!response.ok)throw new Error(result.error||"Permintaan AI gagal (HTTP "+response.status+").");
+      return result;
+    }
+    function setupSubjects() {
+      const options=subjects.map(subject=>'<option value="'+subject.id+'">'+escapeHtml(subject.name)+'</option>').join("");
+      document.getElementById("subject-select").innerHTML=options;
+      document.getElementById("game-subject").innerHTML=options;
+      document.getElementById("bot-rank").innerHTML=ranks.map((rank,index)=>'<option value="'+index+'">'+rank+'</option>').join("");
+      document.getElementById("bot-rank").value=String(rankIndex());
+      renderHomeSubjects();
+      document.getElementById("subject-select").addEventListener("change",updateLesson);
+      document.getElementById("grade-select").addEventListener("change",updateLesson);
+      document.getElementById("subject-filters").addEventListener("click",event=>{
+        const filter=event.target.closest("[data-filter]");
+        if(!filter)return;
+        selectedSubjectFilter=filter.dataset.filter;
+        document.getElementById("subject-search").value="";
+        renderHomeSubjects();
+      });
+      document.getElementById("subject-search").addEventListener("input",()=>{
+        selectedSubjectFilter="all";
+        renderHomeSubjects();
+      });
+      document.getElementById("home-subjects").addEventListener("click",event=>{
+        const card=event.target.closest("[data-subject]");
+        if(!card)return;
+        document.getElementById("subject-select").value=card.dataset.subject;
+        updateLesson(); go("learn");
+      });
+      updateLesson();
+    }
+    let selectedSubjectFilter="all";
+    function renderHomeSubjects() {
+      const groups={
+        sains:["math","ipa","physics","chemistry","biology"],
+        bahasa:["indonesian","english","arabic","regional"],
+        sosial:["history","geography","economics","sociology","civics","religion","ips","entrepreneurship"],
+        kreatif:["arts","pe","craft"],
+        teknologi:["informatics"]
+      };
+      const filters=[["pilihan","Pilihan"],["all","Semua"],["sains","Sains"],["bahasa","Bahasa"],["sosial","Sosial"],["kreatif","Kreatif"],["teknologi","Teknologi"]];
+      document.getElementById("subject-filters").innerHTML=filters.map(([id,label])=>'<button type="button" class="subject-filter '+(selectedSubjectFilter===id?"active":"")+'" data-filter="'+id+'">'+label+'</button>').join("");
+      const search=document.getElementById("subject-search").value.trim().toLowerCase();
+      let visible;
+      if(search)visible=subjects.filter(subject=>(subject.name+" "+subject.summary).toLowerCase().includes(search));
+      else if(selectedSubjectFilter==="pilihan")visible=subjects.filter(subject=>["math","english","physics","biology"].includes(subject.id));
+      else if(selectedSubjectFilter==="all")visible=subjects;
+      else visible=subjects.filter(subject=>(groups[selectedSubjectFilter]||[]).includes(subject.id));
+      const grid=document.getElementById("home-subjects");
+      grid.classList.toggle("all-subjects",visible.length>4);
+      grid.innerHTML=visible.map(subject=>'<button class="subject-card" style="--subject-color:'+subject.color+'" data-subject="'+subject.id+'"><span class="subject-icon">'+subject.icon+'</span><strong>'+escapeHtml(subject.name)+'</strong><small>'+escapeHtml(subject.summary)+'</small></button>').join("");
+      document.getElementById("subject-result-meta").textContent=search?visible.length+" mapel ditemukan":"Menampilkan "+visible.length+" mata pelajaran";
+    }
+    let lastTutorSubjectId="";
+    function updateLesson() {
+      const subject=subjects.find(item=>item.id===document.getElementById("subject-select").value);
+      if(!subject) {
+        document.getElementById("lesson-title").textContent="Pilih mata pelajaran";
+        document.getElementById("lesson-description").textContent="Tidak ada mata pelajaran yang dipilih.";
+        return;
+      }
+      const grade=document.getElementById("grade-select").value;
+      document.getElementById("lesson-eyebrow").textContent=subject.name.toUpperCase()+" · RINGKASAN";
+      document.getElementById("lesson-title").textContent="Pahami "+subject.name;
+      document.getElementById("lesson-description").textContent=subject.summary;
+      document.getElementById("lesson-example").textContent=subject.example;
+      document.getElementById("tutor-subject-label").textContent=subject.name+" · tingkat "+grade;
+      if(lastTutorSubjectId!==subject.id) {
+        const transcript=document.getElementById("tutor-transcript");
+        transcript.replaceChildren();
+        appendTutorMessage("Tanya apa saja tentang "+subject.name+". Aku akan menjaga penjelasan tetap pada mapel ini.","assistant");
+        lastTutorSubjectId=subject.id;
+      }
+    }
+    function appendTutorMessage(text,role) {
+      const bubble=document.createElement("div");
+      bubble.className="bubble "+role;
+      bubble.textContent=text;
+      bubble.dataset.rawText=text;
+      const transcript=document.getElementById("tutor-transcript");
+      transcript.appendChild(bubble);
+      typesetMath(bubble);
+      transcript.scrollTop=transcript.scrollHeight;
+      return bubble;
+    }
+    function appendTutorThinking() {
+      const bubble=document.createElement("div");
+      bubble.className="bubble assistant thinking";
+      bubble.setAttribute("role","status");
+      bubble.setAttribute("aria-label","AI sedang berpikir");
+      bubble.append("AI sedang berpikir");
+      const dots=document.createElement("span");
+      dots.className="thinking-dots";
+      dots.setAttribute("aria-hidden","true");
+      dots.innerHTML="<i></i><i></i><i></i>";
+      bubble.appendChild(dots);
+      const transcript=document.getElementById("tutor-transcript");
+      transcript.appendChild(bubble);
+      transcript.scrollTop=transcript.scrollHeight;
+      return bubble;
+    }
+    let tutorPending=false;
+    async function askTutor(text) {
+      const question=text.trim();
+      if(!question||tutorPending)return;
+      const subjectId=document.getElementById("subject-select").value;
+      const subject=subjects.find(item=>item.id===subjectId);
+      if(!subject)return toast("Pilih mata pelajaran sebelum bertanya.");
+      appendTutorMessage(question,"user");
+      document.getElementById("tutor-input").value="";
+      const transcript=document.getElementById("tutor-transcript");
+      const conversation=Array.from(transcript.querySelectorAll(".bubble:not(.thinking)")).slice(-12).map(bubble=>({
+        role:bubble.classList.contains("user")?"user":"assistant",content:bubble.dataset.rawText||bubble.textContent
+      }));
+      const submit=document.querySelector("#tutor-form button");
+      tutorPending=true; submit.disabled=true;
+      const thinking=appendTutorThinking();
+      try {
+        const result=await apiPost("/api/chat",{subject_id:subjectId,grade:document.getElementById("grade-select").value,conversation});
+        if(document.getElementById("subject-select").value!==subjectId)return;
+        if(typeof result.reply!=="string"||!result.reply.trim())throw new Error("Tutor AI mengirim jawaban kosong.");
+        appendTutorMessage(result.reply,"assistant");
+      } catch(error) {
+        if(error.name==="AbortError")return;
+        console.error("Tutor AI gagal menjawab:",error);
+        appendTutorMessage("Belum bisa mendapat jawaban AI. "+error.message,"assistant");
+      } finally {
+        thinking.remove();
+        tutorPending=false; submit.disabled=false;
+      }
+    }
+    document.getElementById("tutor-form").addEventListener("submit",event=>{event.preventDefault();askTutor(document.getElementById("tutor-input").value);});
+    document.querySelectorAll("[data-tutor-suggestion]").forEach(button=>button.addEventListener("click",()=>askTutor(button.dataset.tutorSuggestion)));
+    function toast(message) {
+      const el = document.getElementById("toast"); el.textContent = message; el.classList.add("show");
+      clearTimeout(toast.timer); toast.timer = setTimeout(()=>el.classList.remove("show"),2400);
+    }
+    function go(view) {
+      document.querySelectorAll(".view").forEach(el=>el.classList.toggle("active",el.id==="view-"+view));
+      document.querySelectorAll(".nav-btn").forEach(el=>el.classList.toggle("active",el.dataset.view===view));
+      document.getElementById("crumb").textContent = ({home:"Beranda",learn:"Belajar",play:"Arena",friends:"Teman",leaderboard:"Leaderboard",account:"Akun saya"})[view];
+      if(view==="leaderboard") renderBoard();
+      if(view==="account") renderProfile();
+      window.scrollTo(0,0);
+    }
+    document.querySelectorAll("[data-view]").forEach(el=>el.addEventListener("click",()=>go(el.dataset.view)));
+    document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>go(el.dataset.goto)));
+    document.getElementById("today").textContent = new Intl.DateTimeFormat("id-ID",{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+    document.getElementById("friend-form").addEventListener("submit",event=>{
+      event.preventDefault();
+      const input=document.getElementById("friend-input"), id=input.value.trim().toUpperCase();
+      const alias=document.getElementById("friend-alias").value.trim();
+      if(!/^NRN-[A-Z0-9]{10}$/.test(id))return toast("Format ID tidak cocok. Contoh: NRN-ABC123DEF4");
+      if(id===state.accountId)return toast("Itu ID akunmu sendiri.");
+      if(state.friends.some(friend=>friend.id===id))return toast("ID akun ini sudah ada di daftar teman.");
+      const name=alias||"Teman "+id.slice(-4);
+      state.friends.push({id,name}); input.value=""; document.getElementById("friend-alias").value="";
+      save(); renderStats(); toast(name+" ditambahkan berdasarkan ID akun.");
+    });
+    document.getElementById("profile-form").addEventListener("submit",event=>{
+      event.preventDefault();
+      const name=document.getElementById("profile-name").value.trim();
+      if(!name)return toast("Nama tampilan tidak boleh kosong.");
+      state.name=name; save(); renderStats(); toast("Profil berhasil disimpan.");
+    });
+    document.getElementById("copy-account-id").addEventListener("click",async()=>{
+      try {
+        await navigator.clipboard.writeText(state.accountId);
+        toast("ID akun berhasil disalin.");
+      } catch(error) {
+        const field=document.createElement("textarea");
+        field.value=state.accountId; document.body.appendChild(field); field.select();
+        const copied=document.execCommand("copy"); field.remove();
+        if(copied)toast("ID akun berhasil disalin.");
+        else { console.error("Gagal menyalin ID akun:",error); toast("Salin ID akun secara manual: "+state.accountId); }
+      }
+    });
+    document.getElementById("avatar-upload").addEventListener("change",event=>{
+      const file=event.target.files[0];
+      if(!file)return;
+      if(!file.type.startsWith("image/"))return toast("Pilih file gambar untuk foto profil.");
+      if(file.size>2*1024*1024){event.target.value="";return toast("Ukuran foto maksimal 2 MB.");}
+      const reader=new FileReader();
+      reader.onload=()=>{
+        if(typeof reader.result!=="string")return toast("Foto tidak dapat dibaca.");
+        state.avatarData=reader.result;
+        try { save(); renderProfile(); toast("Foto profil berhasil diperbarui."); }
+        catch(error) { console.error("Gagal menyimpan foto profil:",error); toast("Foto gagal disimpan. Coba gambar yang lebih kecil."); }
+      };
+      reader.onerror=()=>{console.error("Gagal membaca file foto:",reader.error);toast("File foto tidak dapat dibaca.");};
+      reader.readAsDataURL(file);
+    });
+
+    let studySeconds=0, studyInterval=null;
+    const timerEl=document.getElementById("timer"), studyToggle=document.getElementById("study-toggle");
+    studyToggle.addEventListener("click",()=>{
+      if(!studyInterval) {
+        studyToggle.textContent="Akhiri sesi"; studyToggle.classList.add("secondary");
+        studyInterval=setInterval(()=>{studySeconds++;timerEl.textContent=String(Math.floor(studySeconds/60)).padStart(2,"0")+":"+String(studySeconds%60).padStart(2,"0");},1000);
+        return;
+      }
+      clearInterval(studyInterval); studyInterval=null; studyToggle.textContent="Mulai sesi"; studyToggle.classList.remove("secondary");
+      if(studySeconds<10) { toast("Sesi minimal 10 detik untuk menyimpan progres."); return; }
+      const minutes=Math.max(1,Math.round(studySeconds/60)); state.studyMinutes+=minutes;
+      const today=localDate(new Date()), yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+      if(state.lastStudy!==today) state.streak=state.lastStudy===localDate(yesterday)?state.streak+1:1;
+      state.lastStudy=today; const earned=Math.max(10,minutes*5); state.xp+=earned; save(); renderStats();
+      studySeconds=0; timerEl.textContent="00:00"; toast("Sesi selesai! +"+earned+" XP · "+minutes+" menit belajar");
+    });
+
+    let selectedMode="rank";
+    const modeCopy={
+      rank:["Ranked 1v1","Menang untuk mendapat poin rank dan XP akun.","⚠️ Prototipe lokal: lawan ditampilkan sebagai simulasi. Multiplayer manusia sungguhan memerlukan server dan matchmaking."],
+      fun:["Fun 1v1","Main santai: hasil menambah XP akun, tidak mengubah poin rank.","⚠️ Prototipe lokal: lawan ditampilkan sebagai simulasi. Multiplayer manusia sungguhan memerlukan server dan matchmaking."],
+      bot:["Balapan lawan bot","Kamu dan bot langsung menjawab bersamaan. Bot rank tinggi lebih cepat dan mendapat soal lebih sulit.","Bot mulai menjawab saat soal muncul—tidak menunggu jawabanmu."]
+    };
+    document.querySelectorAll("[data-mode]").forEach(btn=>btn.addEventListener("click",()=>{
+      selectedMode=btn.dataset.mode; document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("selected",b===btn));
+      document.getElementById("mode-title").textContent=modeCopy[selectedMode][0];
+      document.getElementById("mode-description").textContent=modeCopy[selectedMode][1];
+      document.getElementById("multiplayer-note").textContent=modeCopy[selectedMode][2];
+      document.getElementById("multiplayer-note").style.display=selectedMode==="bot"?"none":"block";
+      document.getElementById("bot-options").style.display=selectedMode==="bot"?"flex":"none";
+    }));
+    let game=null;
+    document.getElementById("start-game").addEventListener("click",startGame);
+    function startGame() {
+      const botTier=selectedMode==="bot"?Number(document.getElementById("bot-rank").value):rankIndex();
+      const subjectId=document.getElementById("game-subject").value;
+      if(!subjects.some(subject=>subject.id===subjectId))return toast("Pilih mata pelajaran duel yang tersedia.");
+      const opponent=selectedMode==="bot"?"Bot "+ranks[botTier]:"Pemain demo";
+      game={mode:selectedMode,tier:botTier,opponent,subjectId,round:0,player:0,other:0,playerStreak:0,otherStreak:0,answeredPlayer:false,answeredOther:false,questionWinner:null,advancing:false,goldenRound:false,question:null,recentQuestions:[]};
+      document.getElementById("arena-select").style.display="none"; document.getElementById("game-area").style.display="block"; nextQuestion();
+    }
+    async function getQuestion(subjectId,tier,signal,recentQuestions=game.recentQuestions.slice(-12)) {
+      if(!subjects.some(subject=>subject.id===subjectId))throw new Error("Mapel soal tidak dikenal.");
+      const generated=await apiPost("/api/questions",{
+        subject_id:subjectId,
+        rank:ranks[tier],
+        recent_questions:recentQuestions
+      },signal);
+      if(generated.subjectId!==subjectId)throw new Error("Soal AI tidak cocok dengan mapel yang dipilih.");
+      if(typeof generated.q!=="string"||!Array.isArray(generated.a)||generated.a.length!==4||
+        generated.a.some(answer=>typeof answer!=="string")||
+        !Number.isInteger(generated.c)||generated.c<0||generated.c>=generated.a.length) {
+        throw new Error("Format soal dari AI tidak valid. Coba buat soal lagi.");
+      }
+      return generated;
+    }
+    function clearGameTimers(preservePrefetch=false) {
+      if(!game)return;
+      clearInterval(game.clockInterval);
+      clearTimeout(game.playerTimeout);
+      clearTimeout(game.botTimeout);
+      clearTimeout(game.nextTimeout);
+      if(game.questionController) {
+        game.questionController.abort();
+        game.questionController=null;
+      }
+      if(!preservePrefetch&&game.prefetchedQuestion) {
+        game.prefetchedQuestion.controller.abort();
+        game.prefetchedQuestion=null;
+      }
+    }
+    async function nextQuestion() {
+      if(!game)return;
+      clearGameTimers(true);
+      const activeGame=game;
+      const round=++activeGame.round;
+      const area=document.getElementById("game-area");
+      const subject=subjects.find(item=>item.id===activeGame.subjectId);
+      const prefetch=activeGame.prefetchedQuestion&&activeGame.prefetchedQuestion.round===round?activeGame.prefetchedQuestion:null;
+      if(activeGame.prefetchedQuestion&&!prefetch) {
+        activeGame.prefetchedQuestion.controller.abort();
+        activeGame.prefetchedQuestion=null;
+      }
+      if(prefetch)activeGame.prefetchedQuestion=null;
+      area.innerHTML='<article class="card"><div class="game-top"><span class="badge green">'+(prefetch?"MEMUAT SOAL BERIKUTNYA · ":"MENYIAPKAN SOAL · ")+escapeHtml(subject.name)+'</span><button class="text-link" id="leave-game">Keluar</button></div><p class="small ai-thinking" role="status"><span>'+(prefetch?"Soal berikutnya sedang disiapkan.":("AI sedang membuat soal baru khusus "+escapeHtml(subject.name)+" untuk rank "+escapeHtml(ranks[activeGame.tier])+"."))+' Bot mulai menjawab setelah soal tampil.</span><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></p></article>';
+      area.querySelector("#leave-game").addEventListener("click",leaveGame);
+      const controller=prefetch?prefetch.controller:new AbortController();
+      activeGame.questionController=controller;
+      try {
+        if(prefetch) {
+          const result=await prefetch.promise;
+          if(result.error)throw result.error;
+          activeGame.question=result.question;
+        } else {
+          activeGame.question=await getQuestion(activeGame.subjectId,activeGame.tier,controller.signal);
+        }
+      } catch(error) {
+        if(game!==activeGame||controller.signal.aborted)return;
+        activeGame.round--;
+        console.error("Gagal membuat soal AI:",error);
+        area.innerHTML='<article class="card"><div class="eyebrow">Soal belum tersedia</div><h2>Belum bisa membuat soal</h2><p class="small">'+escapeHtml(error.message)+'</p><div class="row"><button class="btn" id="retry-question">Coba lagi</button><button class="btn secondary" id="leave-game">Kembali ke arena</button></div></article>';
+        area.querySelector("#retry-question").addEventListener("click",nextQuestion);
+        area.querySelector("#leave-game").addEventListener("click",leaveGame);
+        return;
+      } finally {
+        if(activeGame.questionController===controller)activeGame.questionController=null;
+      }
+      if(game!==activeGame||activeGame.round!==round)return;
+      activeGame.recentQuestions.push(activeGame.question.q);
+      game.answerOrder=game.question.a.map((_,i)=>i).sort(()=>Math.random()-.5);
+      game.answeredPlayer=false; game.answeredOther=false; game.questionWinner=null; game.advancing=false; game.timeLeft=8;
+      const choices=game.answerOrder.map((answerIndex,i)=>'<button class="answer" data-answer="'+i+'">'+escapeHtml(game.question.a[answerIndex])+'</button>').join("");
+      area.innerHTML='<article class="card"><div class="game-top"><span class="badge green">'+(game.goldenRound?"GOLDEN ROUND":game.mode==="rank"?"RANKED":game.mode==="fun"?"FUN":"BOT · "+ranks[game.tier].toUpperCase())+' · '+escapeHtml(subject.name)+'</span><button class="text-link" id="leave-game">Keluar</button></div><div class="row small"><span>'+(game.goldenRound?"Soal penentu — jawaban benar pertama menang":"Soal "+game.round+" / 25")+'</span><span>'+escapeHtml(game.opponent)+'</span></div><div class="progress-track"><span style="width:'+Math.min(100,game.round/25*100)+'%"></span></div><div class="scoreboard"><div class="score-player"><div class="avatar">A</div><div>'+escapeHtml(state.name)+'</div><div class="score" id="player-score">'+game.player+'</div></div><div class="versus">VS</div><div class="score-player"><div class="avatar" style="background:#ebe2f3;color:#675588">'+(game.mode==="bot"?"🤖":"?")+'</div><div>'+escapeHtml(game.opponent)+'</div><div class="score" id="other-score">'+game.other+'</div></div></div><div class="race-clock"><span class="race-indicator"><i class="race-dot"></i><span id="opponent-state">Lawan sedang menjawab</span></span><strong><span id="race-countdown">8</span> dtk</strong></div><div class="question">'+escapeHtml(game.question.q)+'</div><div class="answers">'+choices+'</div><div class="game-status" id="game-status">'+(game.goldenRound?"Jawaban benar pertama langsung memenangkan golden round!":game.round>=15?"Menang dengan unggul 2 poin dan 2 jawaban benar beruntun. Jika belum ada pemenang setelah soal 25, masuk Golden Round.":"Jawab secepatnya! Poin soal ini untuk jawaban benar pertama.")+'</div></article>';
+      typesetMath(area);
+      area.querySelector("#leave-game").addEventListener("click",leaveGame);
+      area.querySelectorAll("[data-answer]").forEach(btn=>btn.addEventListener("click",()=>submitAnswer(Number(btn.dataset.answer),btn)));
+      startQuestionRace();
+      prefetchNextQuestion(game);
+    }
+    function prefetchNextQuestion(activeGame) {
+      if(activeGame.prefetchedQuestion||activeGame.round>=25)return;
+      const controller=new AbortController();
+      const round=activeGame.round+1;
+      const recentQuestions=activeGame.recentQuestions.slice(-12);
+      const promise=getQuestion(activeGame.subjectId,activeGame.tier,controller.signal,recentQuestions)
+        .then(question=>({question}))
+        .catch(error=>({error}));
+      activeGame.prefetchedQuestion={round,controller,promise};
+    }
+    function startQuestionRace() {
+      const round=game.round;
+      game.questionStartedAt=Date.now();
+      game.clockInterval=setInterval(()=>{
+        if(!game||game.round!==round||game.answeredPlayer)return;
+        game.timeLeft=Math.max(0,game.timeLeft-1);
+        const countdown=document.getElementById("race-countdown");
+        if(countdown)countdown.textContent=game.timeLeft;
+        if(game.timeLeft===0)resolvePlayerTimeout();
+      },1000);
+      game.playerTimeout=setTimeout(resolvePlayerTimeout,8000);
+      const botDelay=game.mode==="bot"?botResponseTimes[game.tier]:900+Math.random()*800;
+      game.opponentDeadline=game.questionStartedAt+botDelay;
+      game.botTimeout=setTimeout(resolveOpponentAnswer,botDelay);
+    }
+    function resolvePlayerTimeout() {
+      if(!game||game.answeredPlayer)return;
+      game.answeredPlayer=true; game.playerStreak=0;
+      clearInterval(game.clockInterval);
+      document.querySelectorAll(".answer").forEach(button=>button.disabled=true);
+      document.getElementById("game-status").textContent=game.questionWinner==="other"?"Waktu habis—bot sudah lebih dulu meraih poin.":"Waktu habis. Tidak ada poin untuk jawabanmu.";
+      checkRoundComplete();
+    }
+    function resolveOpponentAnswer(advance=true) {
+      if(!game||game.answeredOther)return;
+      game.answeredOther=true;
+      const botChance=botCorrectRates[game.tier];
+      const correct=Math.random()<botChance;
+      if(correct) {
+        game.otherStreak++;
+        if(!game.questionWinner) {
+          game.other++; game.questionWinner="other";
+          document.getElementById("game-status").textContent=game.opponent+" lebih cepat dan mendapat poin! Kamu masih bisa menjawab sebelum waktu habis.";
+        }
+      } else {
+        game.otherStreak=0;
+        if(!game.questionWinner)document.getElementById("game-status").textContent=game.opponent+" menjawab salah—kejar poin sebelum waktunya habis!";
+      }
+      document.getElementById("other-score").textContent=game.other;
+      document.getElementById("opponent-state").textContent=correct?"Lawan sudah menjawab":"Lawan salah menjawab";
+      document.querySelector(".race-clock").classList.add("done");
+      if(advance&&game.goldenRound&&correct&&game.questionWinner==="other") {
+        finishGame("loss");
+        return;
+      }
+      if(advance)checkRoundComplete();
+    }
+    function submitAnswer(choice,button) {
+      if(!game||game.answeredPlayer)return;
+      game.answeredPlayer=true;
+      clearTimeout(game.playerTimeout); clearInterval(game.clockInterval);
+      if(!game.answeredOther&&Date.now()>=game.opponentDeadline)resolveOpponentAnswer(false);
+      const correct=game.answerOrder[choice]===game.question.c;
+      document.querySelectorAll(".answer").forEach(answer=>answer.disabled=true);
+      button.classList.add(correct?"correct":"wrong");
+      if(correct) {
+        game.playerStreak++;
+        if(!game.questionWinner) {
+          game.player++; game.questionWinner="player";
+          document.getElementById("game-status").textContent="Kamu benar dan paling cepat—poin untukmu! Menunggu lawan menyelesaikan jawabannya.";
+        } else {
+          document.getElementById("game-status").textContent=game.questionWinner==="other"?"Benar, tapi lawan lebih cepat mengambil poin soal ini.":"Benar! Poin soal ini sudah kamu dapatkan.";
+        }
+      } else {
+        game.playerStreak=0;
+        document.getElementById("game-status").textContent=game.questionWinner==="other"?"Kurang tepat. Lawan sudah lebih dulu mendapat poin.":"Belum tepat. Lawan masih bisa merebut poin.";
+      }
+      if(!game.answeredOther)resolveOpponentAnswer(false);
+      document.getElementById("player-score").textContent=game.player;
+      document.getElementById("other-score").textContent=game.other;
+      const status=document.getElementById("game-status");
+      if(game.goldenRound&&game.questionWinner==="player") {
+        status.textContent="Benar! Kamu memenangkan golden round.";
+      } else if(game.goldenRound&&game.questionWinner==="other") {
+        status.textContent="Lawan menjawab benar dan memenangkan golden round.";
+      } else if(correct&&game.questionWinner==="player") {
+        status.textContent="Benar dan tercepat—poin untukmu!";
+      } else if(correct&&game.questionWinner==="other") {
+        status.textContent="Benar, tetapi lawan lebih dulu mengambil poin soal ini.";
+      } else if(game.questionWinner==="other") {
+        status.textContent="Kurang tepat. Lawan mendapat poin soal ini.";
+      } else {
+        status.textContent="Belum tepat. Tidak ada poin pada soal ini.";
+      }
+      checkRoundComplete();
+    }
+    function checkRoundComplete() {
+      if(!game||!game.answeredPlayer||!game.answeredOther||game.advancing)return;
+      game.advancing=true;
+      clearGameTimers(true);
+      if(game.goldenRound) {
+        if(game.questionWinner==="player")return finishGame("win");
+        if(game.questionWinner==="other")return finishGame("loss");
+        game.advancing=false;
+        nextQuestion();
+        return;
+      }
+      if(game.round>=15) {
+        if(game.player-game.other>=2&&game.playerStreak>=2)return finishGame("win");
+        if(game.other-game.player>=2&&game.otherStreak>=2)return finishGame("loss");
+      }
+      if(game.round>=25) {
+        game.goldenRound=true;
+        game.advancing=false;
+        nextQuestion();
+        return;
+      }
+      game.advancing=false;
+      nextQuestion();
+    }
+    function finishGame(result) {
+      clearGameTimers();
+      const completed=game;
+      let xp=completed.mode==="rank"?25:completed.mode==="fun"?20:15;
+      let rankDelta=0;
+      if(completed.mode==="rank") { rankDelta=result==="win"?20:result==="loss"?-Math.min(10,state.rankPoints):0; state.rankPoints=Math.max(0,state.rankPoints+rankDelta); }
+      state.xp+=xp;
+      save(); renderStats();
+      const title=result==="win"?"Kemenangan!":result==="loss"?"Pertandingan selesai":"Seri!";
+      const detail=(completed.mode==="rank"?(result==="win"?"+"+rankDelta+" poin rank":rankDelta<0?"-"+Math.abs(rankDelta)+" poin rank":"Rank tidak berubah"):(completed.mode==="fun"?"Rank tidak berubah":"Latihan bot"))+" · +"+xp+" XP";
+      document.getElementById("game-area").innerHTML='<article class="card result"><div class="eyebrow">Pertandingan selesai · '+(completed.goldenRound?"Golden round · ":"")+completed.round+' soal · '+escapeHtml(subjects.find(subject=>subject.id===completed.subjectId).name)+'</div><h2>'+title+'</h2><p class="sub">'+completed.player+' — '+completed.other+' melawan '+escapeHtml(completed.opponent)+'</p><p class="small">'+detail+'</p><p class="small">Mulai soal ke-15, pertandingan selesai setelah unggul 2 poin dengan 2 jawaban benar beruntun. Jika belum ada pemenang setelah 25 soal, golden round dimulai: jawaban benar pertama menang.</p><button class="btn" id="again">Kembali ke arena</button></article>';
+      document.getElementById("again").addEventListener("click",leaveGame);
+    }
+    function leaveGame() { clearGameTimers(); game=null; document.getElementById("game-area").style.display="none"; document.getElementById("arena-select").style.display="block"; }
+    let boardMode="rank";
+    document.querySelectorAll("[data-board]").forEach(btn=>btn.addEventListener("click",()=>{boardMode=btn.dataset.board;document.querySelectorAll("[data-board]").forEach(b=>b.classList.toggle("selected",b===btn));renderBoard();}));
+    function renderBoard() {
+      const isRank=boardMode==="rank";
+      document.getElementById("board-title").textContent="Top 100 · "+(isRank?"Rank":"Waktu belajar");
+      document.getElementById("board-sub").textContent=isRank?"Pemain dengan poin rank tertinggi":"Pemain dengan waktu fokus terbanyak";
+      document.getElementById("board-kind").textContent=isRank?"Rank":"Waktu";
+      const players=Array.from({length:100},(_,i)=>({name:["Naya","Raka","Bima","Salsa","Dito","Alya","Nino","Kirana","Fajar","Zara"][i%10]+(i>=10?" "+(Math.floor(i/10)+1):""),points:Math.max(0,720-i*7),minutes:Math.max(12,1800-i*17),level:Math.max(2,38-Math.floor(i/4))}));
+      const value=isRank?state.rankPoints:state.studyMinutes;
+      const me={name:state.name,points:value,minutes:value,level:level(),isMe:true};
+      const sorted=players.concat(me).sort((a,b)=>(isRank?b.points-a.points:b.minutes-a.minutes));
+      const myPosition=sorted.findIndex(p=>p.isMe)+1;
+      const top=sorted.slice(0,100);
+      const rows=top.map((p,i)=>'<tr class="'+(p.isMe?"me":"")+'"><td>'+(i+1)+'</td><td>'+(p.isMe?"★ ":"")+escapeHtml(p.name)+'</td><td>'+(isRank?'<span class="rank-label"><span class="rank-gem">◆</span>'+rankName(p.points)+'</span>':p.minutes+" mnt")+'</td><td>Lv. '+p.level+'</td></tr>');
+      if(myPosition>100) rows.push('<tr class="me"><td>'+myPosition+'</td><td>★ '+escapeHtml(me.name)+' · Posisi kamu</td><td>'+(isRank?'<span class="rank-label"><span class="rank-gem">◆</span>'+rankName(me.points)+'</span>':me.minutes+" mnt")+'</td><td>Lv. '+me.level+'</td></tr>');
+      document.getElementById("board-rows").innerHTML=rows.join("");
+    }
+    setupSubjects();
+    renderStats();
+  </script>
+</body>
+</html>

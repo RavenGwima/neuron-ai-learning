@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: neuron-ai-learning
+    runtime: python
+    plan: free
+    buildCommand: python --version
+    startCommand: python server.py
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: OPENROUTER_API_KEY
+        sync: false
