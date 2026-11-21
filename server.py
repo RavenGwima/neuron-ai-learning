@@ -290,67 +290,103 @@ def tutor_reply(data):
     return {"reply": openrouter_messages(messages, "OPENROUTER_CHAT_MODEL")}
 
 
+def health_status():
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    chat_model = os.environ.get("OPENROUTER_CHAT_MODEL", "").strip() or DEFAULT_MODELS["OPENROUTER_CHAT_MODEL"]
+    question_model = os.environ.get("OPENROUTER_QUESTION_MODEL", "").strip() or DEFAULT_MODELS["OPENROUTER_QUESTION_MODEL"]
+    configured = bool(
+        api_key
+        and not api_key.startswith("isi_dengan_")
+        and not chat_model.endswith(":batch")
+        and not question_model.endswith(":batch")
+    )
+    return {"ok": True, "configured": configured}
+
+
+def handle_api_post(route, headers, body):
+    if route not in ("/api/questions", "/api/chat"):
+        return 404, {"error": "Rute API tidak ditemukan."}
+
+    origin = headers.get("Origin")
+    if origin:
+        origin_url = urlsplit(origin)
+        request_host = headers.get("Host", "").strip()
+        local_origins = ("http://127.0.0.1:8000", "http://localhost:8000")
+        same_origin = origin_url.scheme in ("http", "https") and origin_url.netloc == request_host
+        if origin not in local_origins and not same_origin:
+            return 403, {"error": "Permintaan lintas situs tidak diizinkan."}
+
+    try:
+        data = json.loads(body.decode("utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("Format permintaan tidak valid.")
+        result = make_question(data) if route == "/api/questions" else tutor_reply(data)
+        return 200, result
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return 400, {"error": "Permintaan harus berupa JSON yang valid."}
+    except ValueError as error:
+        return 400, {"error": str(error)}
+    except RuntimeError as error:
+        logging.error("%s: %s", route, error)
+        return 502, {"error": str(error)}
+
+
 class NeuronHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
 
     def do_GET(self):
-        if urlsplit(self.path).path == "/api/health":
-            api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
-            chat_model = os.environ.get("OPENROUTER_CHAT_MODEL", "").strip() or DEFAULT_MODELS["OPENROUTER_CHAT_MODEL"]
-            question_model = os.environ.get("OPENROUTER_QUESTION_MODEL", "").strip() or DEFAULT_MODELS["OPENROUTER_QUESTION_MODEL"]
-            configured = bool(
-                api_key
-                and not api_key.startswith("isi_dengan_")
-                and not chat_model.endswith(":batch")
-                and not question_model.endswith(":batch")
-            )
-            self.send_json(200, {"ok": True, "configured": configured})
+        self.handle_get(head_only=False)
+
+    def do_HEAD(self):
+        self.handle_get(head_only=True)
+
+    def handle_get(self, head_only):
+        path = urlsplit(self.path).path
+        if path == "/api/health":
+            body = json.dumps(health_status(), ensure_ascii=False).encode("utf-8")
+            self.send_bytes(200, body, "application/json; charset=utf-8", head_only)
             return
-        super().do_GET()
+        if path in ("/", "/index.html"):
+            self.send_bytes(
+                200,
+                (BASE_DIR / "index.html").read_bytes(),
+                "text/html; charset=utf-8",
+                head_only,
+            )
+            return
+        self.send_json(404, {"error": "Halaman tidak ditemukan."}, head_only=head_only)
 
     def do_POST(self):
         route = urlsplit(self.path).path
         if route not in ("/api/questions", "/api/chat"):
             self.send_json(404, {"error": "Rute API tidak ditemukan."})
             return
-        origin = self.headers.get("Origin")
-        if origin:
-            origin_url = urlsplit(origin)
-            request_host = self.headers.get("Host", "").strip()
-            local_origins = ("http://127.0.0.1:8000", "http://localhost:8000")
-            same_origin = origin_url.scheme in ("http", "https") and origin_url.netloc == request_host
-            if origin not in local_origins and not same_origin:
-                self.send_json(403, {"error": "Permintaan lintas situs tidak diizinkan."})
-                return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if length <= 0 or length > MAX_BODY_SIZE:
                 raise ValueError("Ukuran permintaan harus di bawah 16 KB.")
-            data = json.loads(self.rfile.read(length).decode("utf-8"))
-            if not isinstance(data, dict):
-                raise ValueError("Format permintaan tidak valid.")
-            result = make_question(data) if route == "/api/questions" else tutor_reply(data)
-            self.send_json(200, result)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            self.send_json(400, {"error": "Permintaan harus berupa JSON yang valid."})
         except ValueError as error:
             self.send_json(400, {"error": str(error)})
-        except RuntimeError as error:
-            logging.error("%s: %s", route, error)
-            self.send_json(502, {"error": str(error)})
+            return
+        status, result = handle_api_post(route, self.headers, self.rfile.read(length))
+        self.send_json(status, result)
 
     def log_message(self, format, *args):
         logging.info("%s - %s", self.address_string(), format % args)
 
-    def send_json(self, status, data):
+    def send_json(self, status, data, head_only=False):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        self.send_bytes(status, body, "application/json; charset=utf-8", head_only)
+
+    def send_bytes(self, status, body, content_type, head_only=False):
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        if not head_only:
+            self.wfile.write(body)
 
 
 if __name__ == "__main__":
