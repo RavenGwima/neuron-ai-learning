@@ -230,6 +230,23 @@
     .result h2 { font-size: 27px; margin: 6px; }
     .toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%,20px); opacity: 0; pointer-events: none; transition: .2s; background: #e6f0df; color: #3e6042; padding: 11px 16px; border-radius: 12px; font-weight: 650; z-index: 5; box-shadow: 0 8px 24px rgba(77,59,48,.15); }
     .toast.show { transform: translate(-50%,0); opacity: 1; }
+    .auth-gate[hidden] { display:none; }
+    .auth-gate { position:fixed;inset:0;z-index:10;display:grid;place-items:start center;overflow-y:auto;padding:20px;background:rgba(38,35,43,.42);backdrop-filter:blur(8px); }
+    .auth-card { width:min(100%,440px);margin:auto 0;padding:26px;border:1px solid var(--line);border-radius:22px;background:var(--panel);box-shadow:0 24px 80px rgba(40,30,30,.2); }
+    .auth-card h1 { font-size:25px;margin:12px 0 6px; }
+    .auth-card p { margin:0 0 16px;color:var(--muted);font-size:12px; }
+    .auth-form { display:grid;gap:11px; }
+    .auth-form[hidden] { display:none; }
+    .auth-actions { display:grid;gap:9px;margin-top:12px; }
+    .auth-link { border:0;background:none;color:#668f69;font-size:12px;padding:8px; }
+    .auth-divider { display:flex;align-items:center;gap:10px;margin:15px 0;color:var(--muted);font-size:10px; }
+    .auth-divider:before,.auth-divider:after { content:"";height:1px;flex:1;background:var(--line); }
+    .auth-error { min-height:18px;color:#a24750!important;margin:10px 0 0!important; }
+    .account-access { display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:12px; }
+    .admin-card { border-color:#cdbb78;background:linear-gradient(145deg,#fff8dc,var(--panel)); }
+    .admin-tools { margin-top:18px;padding-top:16px;border-top:1px solid #e8dcae; }
+    .admin-fields { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end;margin-top:12px; }
+    .admin-feedback { min-height:18px;margin:9px 0 0;color:var(--muted);font-size:11px; }
     @media (max-width: 900px) {
       .app { grid-template-columns: 74px minmax(0,1fr); }
       aside { padding: 20px 10px; }
@@ -278,6 +295,7 @@
       .mode-card { min-height: 140px; }
       .welcome { align-items: flex-start; flex-direction: column; gap: 12px; }
       .two-col { grid-template-columns: 1fr; }
+      .admin-fields { grid-template-columns:1fr; }
       .mode-select { grid-template-columns: 1fr; }
       .answers { grid-template-columns: 1fr; }
       .subject-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -390,7 +408,7 @@
         </section>
 
         <section class="view" id="view-play">
-          <div class="view-title"><h1>Adu cepat jawab soal</h1><p class="sub">Kamu dan lawan mulai menjawab bersamaan. Siapa cepat, dia dapat poin.</p></div>
+          <div class="view-title"><h1>Adu cepat jawab soal</h1><p class="sub">Kamu dan lawan mulai menjawab bersamaan. 10 soal awal disiapkan sebelum mulai; soal cadangan dibuat saat pertandingan berlangsung.</p></div>
           <div id="arena-select">
             <div class="mode-select">
               <button class="mode-option selected" data-mode="rank"><span>♢ RANKED</span><strong>Kejar rank tertinggi</strong><span>XP akun + poin rank</span></button>
@@ -400,7 +418,7 @@
             <div class="card">
               <div class="row"><div><h2 id="mode-title" style="margin:0 0 5px;font-size:19px">Ranked 1v1</h2><p class="sub" id="mode-description">Menang untuk mendapat poin rank dan XP akun.</p></div><button class="btn" id="start-game">Mulai pertandingan →</button></div>
               <label class="field" style="margin-top:16px;max-width:380px">Mata pelajaran duel<select id="game-subject" aria-label="Pilih mata pelajaran duel"></select></label>
-              <div class="callout" id="multiplayer-note">⚠️ Prototipe lokal: lawan ditampilkan sebagai simulasi. Multiplayer manusia sungguhan memerlukan server dan matchmaking.</div>
+              <div class="callout" id="multiplayer-note">Negara akun menentukan bahasa soal dan preferensi wilayah lawan. Saat ini lawan masih simulasi; matchmaking manusia lintas negara belum aktif.</div>
               <div id="bot-options" class="row small" style="display:none;margin:12px 0"><label for="bot-rank">Tingkat bot</label><select id="bot-rank"></select></div>
               <div class="row small"><span>Aturan pertandingan</span><span>Min. 15 soal · unggul 2 poin · 2 jawaban benar beruntun</span></div>
             </div>
@@ -423,24 +441,77 @@
           <div class="two-col">
             <article class="card">
               <div class="account-panel"><div class="avatar account-avatar" data-profile-avatar>A</div><div><div class="eyebrow">Profil belajar</div><h2 id="account-display-name" style="margin:5px 0">Ari</h2><div class="account-id" id="account-id">NRN-XXXXXXXXXX</div></div></div>
+              <div class="small" id="account-email"></div><span class="badge" id="account-role">Tamu</span>
               <button class="btn subtle" id="copy-account-id" type="button">Salin ID akun</button>
               <label class="btn secondary upload-button" style="margin-left:7px">Ganti foto<input id="avatar-upload" type="file" accept="image/*" aria-label="Pilih foto profil"></label>
+              <div class="account-access"><button class="btn secondary" id="logout-button" type="button">Keluar</button><span class="small">XP, rank, dan waktu belajar tersinkron ke akun.</span></div>
             </article>
-            <article class="card"><div class="eyebrow">Identitasmu</div><h3 style="margin:8px 0">Nama boleh sama</h3><p class="small">ID akunmu tetap berbeda dan menjadi identitas utama saat menambah teman. Ubah nama tanpa kehilangan progres.</p><form id="profile-form" class="friend-list"><label class="field">Nama tampilan<input id="profile-name" maxlength="24" required></label><button class="btn" style="justify-self:start">Simpan profil</button></form></article>
+            <article class="card"><div class="eyebrow">Identitasmu</div><h3 style="margin:8px 0">Nama dan negara</h3><p class="small">Negara pilihan mengatur bahasa jawaban AI. Filter lawan berdasarkan negara belum tersedia karena multiplayer manusia belum aktif.</p><form id="profile-form" class="friend-list"><label class="field">Nama tampilan<input id="profile-name" maxlength="24" required></label><label class="field">Negara<select id="country-select"></select><span class="small" id="country-language"></span></label><button class="btn" style="justify-self:start">Simpan profil</button></form></article>
           </div>
+          <article class="card admin-card full-card" id="admin-panel" hidden>
+            <div class="eyebrow">Panel admin</div><h2 style="margin:6px 0">Administrasi Neuron</h2>
+            <p class="small">Ubah level dan rank akun. Akun dengan role admin selalu dikecualikan dari leaderboard.</p>
+            <div class="row"><span>Akun terdaftar</span><strong id="admin-account-count">—</strong><span>Tamu</span><strong id="admin-guest-count">—</strong></div>
+            <div class="admin-tools">
+              <h3 style="margin:0">Atur progres pemain</h3>
+              <p class="small">Level disetel ke awal level yang dipilih; rank disetel ke batas awal rank itu.</p>
+              <form id="admin-progress-form">
+                <div class="admin-fields">
+                  <label class="field">Akun<select id="admin-target-account" required></select></label>
+                  <label class="field">Level<input id="admin-target-level" type="number" min="1" max="10000000" step="1" required></label>
+                  <label class="field">Rank<select id="admin-target-rank" required></select></label>
+                </div>
+                <button class="btn" id="admin-save-progress" style="margin-top:12px" type="submit">Simpan progres</button>
+                <p class="admin-feedback" id="admin-feedback" role="status"></p>
+              </form>
+            </div>
+          </article>
         </section>
 
         <section class="view" id="view-leaderboard">
           <div class="view-title"><h1>Leaderboard</h1><p class="sub">Rayakan progres, bukan cuma posisi.</p></div>
           <div class="mode-select"><button class="mode-option selected" data-board="rank"><span>♢ KOMPETITIF</span><strong>Rank tertinggi</strong><span>100 pemain teratas</span></button><button class="mode-option" data-board="study"><span>◷ KONSISTENSI</span><strong>Waktu belajar</strong><span>Total menit fokus</span></button></div>
-          <article class="card"><div class="row" style="margin-bottom:8px"><div><h2 id="board-title" style="font-size:18px;margin:0">Top 100 · Rank</h2><div class="small" id="board-sub">Pemain dengan poin rank tertinggi</div></div><span class="badge green">Musim berjalan</span></div><div class="callout">Preview lokal: daftar pemain berisi data contoh. Progres akunmu tersimpan di perangkat ini.</div><div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Pemain</th><th id="board-kind">Rank</th><th>Level</th></tr></thead><tbody id="board-rows"></tbody></table></div></article>
+          <article class="card"><div class="row" style="margin-bottom:8px"><div><h2 id="board-title" style="font-size:18px;margin:0">Top 100 · Rank</h2><div class="small" id="board-sub">Pemain dengan poin rank tertinggi</div></div><span class="badge green">Musim berjalan</span></div><div class="callout">Leaderboard memakai progres akun yang tersimpan di server. Akun admin tidak dihitung.</div><div class="table-wrap"><table class="table"><thead><tr><th>#</th><th>Pemain</th><th id="board-kind">Rank</th><th>Level</th></tr></thead><tbody id="board-rows"></tbody></table></div></article>
         </section>
       </div>
     </main>
   </div>
   <div class="toast" id="toast" role="status"></div>
+  <div class="auth-gate" id="auth-gate" hidden>
+    <section class="auth-card" aria-labelledby="auth-title">
+      <div class="brand" style="padding:0"><div class="brand-mark">✳</div><div>neuron<small>BELAJAR BARENG</small></div></div>
+      <h1 id="auth-title">Mulai belajar bersama</h1>
+      <p>Masuk dengan Google, email, atau lanjut sebagai tamu. Kamu bisa mengganti negara di halaman akun.</p>
+      <button class="btn secondary" id="google-login" type="button" disabled>Lanjutkan dengan Google</button>
+      <p class="small" id="google-status"></p>
+      <div class="auth-divider">atau dengan email</div>
+      <form class="auth-form" id="login-form">
+        <label class="field">Email<input id="login-email" type="email" autocomplete="email" maxlength="254" required></label>
+        <label class="field">Kata sandi<input id="login-password" type="password" autocomplete="current-password" maxlength="256" required></label>
+        <button class="btn" type="submit">Masuk</button>
+      </form>
+      <form class="auth-form" id="register-form" hidden>
+        <label class="field">Nama tampilan<input id="register-name" maxlength="24" autocomplete="name" required></label>
+        <label class="field">Email<input id="register-email" type="email" maxlength="254" autocomplete="email" required></label>
+        <label class="field">Kata sandi (minimal 10 karakter)<input id="register-password" type="password" minlength="10" maxlength="256" autocomplete="new-password" required></label>
+        <button class="btn" type="submit">Buat akun</button>
+      </form>
+      <div class="auth-actions"><button class="auth-link" id="auth-switch" type="button">Belum punya akun? Daftar dengan email</button><button class="btn secondary" id="guest-login" type="button">Lanjut sebagai tamu</button></div>
+      <p class="auth-error" id="auth-error" role="status"></p>
+    </section>
+  </div>
   <script>
-    const KEY = "neuron-learning-v1";
+    const LEGACY_KEY = "neuron-learning-v1";
+    const KEY_PREFIX = "neuron-learning-v1:";
+    let KEY = KEY_PREFIX + "anonymous";
+    let currentUser = null;
+    let csrfToken = "";
+    let progressRevision = 0;
+    let progressSyncTimer = null;
+    let progressSyncing = false;
+    let progressSyncQueued = false;
+    let adminAccounts = [];
+    let availableCountries = [];
     const ranks = ["SD", "SMP", "SMA", "Mahasiswa", "Pakar", "Ilmuwan"];
     const botResponseTimes = [2800,2250,1750,1300,900,650];
     const botCorrectRates = [.42,.52,.62,.73,.84,.92];
@@ -451,7 +522,7 @@
       else for(let i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
       return "NRN-"+Array.from(bytes,byte=>alphabet[byte%alphabet.length]).join("");
     }
-    const state = loadState();
+    let state = loadState();
     const subjects = [
       {id:"math",name:"Matematika",icon:"➗",color:"#c4a4ff",summary:"Matematika membantu kita melihat pola, hubungan, dan cara menyelesaikan masalah.",example:"Contoh: persamaan 2x + 5 = 17 diselesaikan dengan mengisolasi x.",steps:"Tulis yang diketahui, pilih operasi yang sesuai, lalu cek kembali hasilnya."},
       {id:"indonesian",name:"Bahasa Indonesia",icon:"✍️",color:"#ff92bd",summary:"Bahasa Indonesia melatih kita memahami, menilai, dan menyampaikan gagasan dengan jelas.",example:"Gagasan utama biasanya merangkum inti paragraf, bukan sekadar mengulang satu kalimat.",steps:"Cari topik yang dibahas, tandai kalimat kunci, lalu simpulkan dengan kata-katamu."},
@@ -486,7 +557,10 @@
       }
     }
     save();
-    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+    function save(syncProgress=true) {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      if(syncProgress)scheduleProgressSync();
+    }
     function level() { return Math.floor(state.xp / 100) + 1; }
     function rankIndex() { return Math.min(ranks.length - 1, Math.floor(state.rankPoints / 100)); }
     function rankName(points) { return ranks[Math.min(ranks.length - 1, Math.floor(points / 100))]; }
@@ -533,6 +607,10 @@
       document.getElementById("account-display-name").textContent=state.name;
       document.getElementById("account-id").textContent=state.accountId;
       document.getElementById("profile-name").value=state.name;
+      if(currentUser) {
+        document.getElementById("account-email").textContent=currentUser.guest?"Akun tamu di perangkat ini":currentUser.email||"";
+        document.getElementById("account-role").textContent=currentUser.role==="admin"?"ADMIN":currentUser.guest?"TAMU":"AKUN";
+      }
       document.querySelectorAll("[data-profile-avatar]").forEach(avatar=>{
         avatar.textContent="";
         if(state.avatarData) {
@@ -569,6 +647,300 @@
       }
       if(!response.ok)throw new Error(result.error||"Permintaan AI gagal (HTTP "+response.status+").");
       return result;
+    }
+    async function authRequest(path,options={}) {
+      const requestOptions={method:options.method||"GET",headers:{}};
+      if(options.body!==undefined) {
+        requestOptions.headers["Content-Type"]="application/json";
+        requestOptions.body=JSON.stringify(options.body);
+      }
+      if(requestOptions.method==="POST"&&csrfToken)requestOptions.headers["X-CSRF-Token"]=csrfToken;
+      let response;
+      try { response=await fetch(path,requestOptions); }
+      catch(error) { throw new Error("Server akun tidak terjangkau. Periksa koneksi lalu coba lagi."); }
+      let result;
+      try { result=JSON.parse(await response.text()); }
+      catch(error) {
+        if(!response.ok&&response.status===503)throw new Error("Server sedang bangun. Tunggu sebentar lalu coba lagi.");
+        throw new Error("Server akun mengirim respons yang tidak dapat dibaca.");
+      }
+      if(!response.ok) {
+        const error=new Error(result.error||"Permintaan akun gagal (HTTP "+response.status+").");
+        error.status=response.status;
+        throw error;
+      }
+      return result;
+    }
+    function progressPayload() {
+      return {
+        xp:state.xp,
+        rank_points:state.rankPoints,
+        study_minutes:state.studyMinutes,
+        streak:state.streak,
+        last_study:state.lastStudy,
+        revision:progressRevision
+      };
+    }
+    function applyServerProgress(progress) {
+      state.xp=progress.xp;
+      state.rankPoints=progress.rank_points;
+      state.studyMinutes=progress.study_minutes;
+      state.streak=progress.streak;
+      state.lastStudy=progress.last_study;
+    }
+    function scheduleProgressSync() {
+      if(!currentUser||!csrfToken)return;
+      clearTimeout(progressSyncTimer);
+      progressSyncTimer=setTimeout(()=>{
+        progressSyncTimer=null;
+        syncProgress();
+      },450);
+    }
+    async function syncProgress() {
+      if(!currentUser||!csrfToken)return;
+      if(progressSyncing) {
+        progressSyncQueued=true;
+        return;
+      }
+      progressSyncing=true;
+      const syncingAccountId=currentUser.id;
+      try {
+        const result=await authRequest("/api/progress",{method:"POST",body:progressPayload()});
+        if(currentUser&&currentUser.id===syncingAccountId)progressRevision=result.progress.revision;
+      } catch(error) {
+        if(currentUser&&currentUser.id===syncingAccountId&&error.status===409) {
+          try {
+            const latest=await authRequest("/api/progress");
+            if(!currentUser||currentUser.id!==syncingAccountId)return;
+            progressRevision=latest.progress.revision;
+            applyServerProgress(latest.progress);
+            save(false);
+            renderStats();
+            toast("Progres terbaru dari server dimuat.");
+          } catch(refreshError) {
+            if(!currentUser||currentUser.id!==syncingAccountId)return;
+            console.error("Gagal memuat ulang progres akun:",refreshError);
+            toast("Progres akun belum dapat disinkronkan. Coba muat ulang.");
+          }
+        } else if(currentUser&&currentUser.id===syncingAccountId) {
+          console.error("Gagal menyinkronkan progres akun:",error);
+          toast("Progres akun belum tersimpan di server. Periksa koneksi.");
+        }
+      } finally {
+        progressSyncing=false;
+        if(progressSyncQueued) {
+          progressSyncQueued=false;
+          scheduleProgressSync();
+        }
+      }
+    }
+    function showAuthError(message) {
+      document.getElementById("auth-error").textContent=message||"";
+    }
+    function showAuthGate(message="") {
+      document.getElementById("auth-gate").hidden=false;
+      showAuthError(message);
+    }
+    function setCountryOptions(countries) {
+      availableCountries=Array.isArray(countries)?countries:[];
+      const options=availableCountries.map(country=>'<option value="'+escapeHtml(country.code)+'">'+escapeHtml(country.name)+'</option>').join("");
+      document.getElementById("country-select").innerHTML=options;
+    }
+    function updateCountryLanguage() {
+      const country=availableCountries.find(item=>item.code===document.getElementById("country-select").value);
+      document.getElementById("country-language").textContent=country?"Bahasa soal dan tutor AI: "+country.language:"";
+    }
+    async function setAuthenticatedUser(user,token) {
+      clearTimeout(progressSyncTimer);
+      progressSyncTimer=null;
+      progressSyncQueued=false;
+      progressRevision=0;
+      currentUser=user;
+      csrfToken=token||csrfToken;
+      const accountKey=KEY_PREFIX+user.id;
+      if(!localStorage.getItem(accountKey)) {
+        const legacy=localStorage.getItem(LEGACY_KEY);
+        if(legacy)localStorage.setItem(accountKey,legacy);
+      }
+      KEY=accountKey;
+      state=loadState();
+      state.name=user.name;
+      state.accountId=user.id;
+      save(false);
+      try {
+        const result=await authRequest("/api/progress");
+        progressRevision=result.progress.revision;
+        if(progressRevision>0) {
+          applyServerProgress(result.progress);
+          save(false);
+        } else {
+          await syncProgress();
+        }
+      } catch(error) {
+        console.error("Gagal memuat progres akun:",error);
+        toast("Progres akun belum berhasil dimuat dari server.");
+      }
+      document.getElementById("account-email").textContent=user.guest?"Akun tamu di perangkat ini":user.email||"";
+      document.getElementById("account-role").textContent=user.role==="admin"?"ADMIN":user.guest?"TAMU":"AKUN";
+      document.getElementById("country-select").value=user.country;
+      updateCountryLanguage();
+      document.getElementById("auth-gate").hidden=true;
+      renderStats();
+      const adminPanel=document.getElementById("admin-panel");
+      adminPanel.hidden=user.role!=="admin";
+      if(user.role==="admin")loadAdminPanel();
+    }
+    async function loadAdminPanel() {
+      try {
+        const [summary,result]=await Promise.all([
+          authRequest("/api/admin/summary"),
+          authRequest("/api/admin/accounts")
+        ]);
+        adminAccounts=result.accounts;
+        document.getElementById("admin-account-count").textContent=summary.accounts;
+        document.getElementById("admin-guest-count").textContent=summary.guests;
+        document.getElementById("admin-target-rank").innerHTML=ranks.map(rank=>'<option value="'+escapeHtml(rank)+'">'+escapeHtml(rank)+'</option>').join("");
+        document.getElementById("admin-target-account").innerHTML=adminAccounts.map(account=>{
+          const label=(account.role==="admin"?"[ADMIN] ":account.guest?"[TAMU] ":"")+account.name+" · "+account.id;
+          return '<option value="'+escapeHtml(account.id)+'">'+escapeHtml(label)+'</option>';
+        }).join("");
+        fillAdminProgressFields();
+      } catch(error) {
+        console.error("Gagal memuat daftar akun admin:",error);
+        document.getElementById("admin-feedback").textContent=error.message;
+      }
+    }
+    function fillAdminProgressFields() {
+      const selected=document.getElementById("admin-target-account").value;
+      const account=adminAccounts.find(item=>item.id===selected);
+      if(!account)return;
+      document.getElementById("admin-target-level").value=account.level;
+      document.getElementById("admin-target-rank").value=account.rank;
+    }
+    async function saveAdminProgress(event) {
+      event.preventDefault();
+      const button=document.getElementById("admin-save-progress");
+      const feedback=document.getElementById("admin-feedback");
+      button.disabled=true;
+      feedback.textContent="";
+      try {
+        const result=await authRequest("/api/admin/progress",{method:"POST",body:{
+          account_id:document.getElementById("admin-target-account").value,
+          level:Number(document.getElementById("admin-target-level").value),
+          rank:document.getElementById("admin-target-rank").value
+        }});
+        const account=adminAccounts.find(item=>item.id===result.account_id);
+        if(account) {
+          account.level=result.level;
+          account.xp=result.progress.xp;
+          account.rank=result.rank;
+          account.rank_points=result.progress.rank_points;
+        }
+        if(currentUser&&currentUser.id===result.account_id) {
+          applyServerProgress(result.progress);
+          progressRevision=result.progress.revision;
+          save(false);
+          renderStats();
+        }
+        feedback.textContent="Progres berhasil disimpan.";
+        if(document.getElementById("view-leaderboard").classList.contains("active"))renderBoard();
+      } catch(error) {
+        console.error("Gagal mengubah progres akun:",error);
+        feedback.textContent=error.message;
+      } finally {
+        button.disabled=false;
+      }
+    }
+    function setAuthMode(register) {
+      document.getElementById("login-form").hidden=register;
+      document.getElementById("register-form").hidden=!register;
+      document.getElementById("auth-title").textContent=register?"Buat akun Neuron":"Mulai belajar bersama";
+      document.getElementById("auth-switch").textContent=register?"Sudah punya akun? Masuk":"Belum punya akun? Daftar dengan email";
+      showAuthError("");
+    }
+    function setupAuth() {
+      document.getElementById("auth-switch").addEventListener("click",()=>setAuthMode(!document.getElementById("login-form").hidden));
+      document.getElementById("admin-target-account").addEventListener("change",fillAdminProgressFields);
+      document.getElementById("admin-progress-form").addEventListener("submit",saveAdminProgress);
+      document.getElementById("login-form").addEventListener("submit",async event=>{
+        event.preventDefault(); showAuthError("");
+        const button=event.currentTarget.querySelector("button[type=submit]");
+        button.disabled=true;
+        try {
+          const result=await authRequest("/api/auth/login",{method:"POST",body:{
+            email:document.getElementById("login-email").value,
+            password:document.getElementById("login-password").value
+          }});
+          await setAuthenticatedUser(result.user,result.csrf_token);
+        } catch(error) { showAuthError(error.message); }
+        finally { button.disabled=false; }
+      });
+      document.getElementById("register-form").addEventListener("submit",async event=>{
+        event.preventDefault(); showAuthError("");
+        const button=event.currentTarget.querySelector("button[type=submit]");
+        button.disabled=true;
+        try {
+          const result=await authRequest("/api/auth/register",{method:"POST",body:{
+            name:document.getElementById("register-name").value,
+            email:document.getElementById("register-email").value,
+            password:document.getElementById("register-password").value
+          }});
+          await setAuthenticatedUser(result.user,result.csrf_token);
+        } catch(error) { showAuthError(error.message); }
+        finally { button.disabled=false; }
+      });
+      document.getElementById("guest-login").addEventListener("click",async()=>{
+        showAuthError("");
+        try {
+          const result=await authRequest("/api/auth/guest",{method:"POST",body:{}});
+          await setAuthenticatedUser(result.user,result.csrf_token);
+        } catch(error) { showAuthError(error.message); }
+      });
+      document.getElementById("google-login").addEventListener("click",async()=>{
+        showAuthError("");
+        try {
+          const result=await authRequest("/api/auth/google/start");
+          window.location.assign(result.url);
+        } catch(error) { showAuthError(error.message); }
+      });
+      document.getElementById("logout-button").addEventListener("click",async()=>{
+        try {
+          await authRequest("/api/auth/logout",{method:"POST",body:{}});
+          currentUser=null; csrfToken="";
+          clearTimeout(progressSyncTimer);
+          progressSyncTimer=null;
+          progressRevision=0;
+          adminAccounts=[];
+          document.getElementById("admin-panel").hidden=true;
+          showAuthGate();
+        } catch(error) { toast(error.message); }
+      });
+      document.getElementById("country-select").addEventListener("change",updateCountryLanguage);
+      document.getElementById("profile-form").addEventListener("submit",async event=>{
+        event.preventDefault();
+        const name=document.getElementById("profile-name").value.trim();
+        if(!name)return toast("Nama tampilan tidak boleh kosong.");
+        try {
+          const result=await authRequest("/api/account",{method:"POST",body:{
+            name,country:document.getElementById("country-select").value
+          }});
+          currentUser=result.user; state.name=currentUser.name; state.accountId=currentUser.id;
+          save(); renderStats(); toast("Profil dan negara berhasil disimpan.");
+        } catch(error) { toast(error.message); }
+      });
+      const configRequest=authRequest("/api/auth/config").then(config=>{
+        setCountryOptions(config.countries);
+        const googleButton=document.getElementById("google-login");
+        googleButton.disabled=!config.google_enabled;
+        document.getElementById("google-status").textContent=config.google_enabled
+          ?"Login Google tersedia."
+          :"Login Google perlu disiapkan admin melalui GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, dan PUBLIC_APP_URL.";
+      });
+      const authError=new URLSearchParams(location.search).get("auth_error");
+      configRequest.then(()=>authRequest("/api/auth/me")).then(async result=>{
+        if(result.user)await setAuthenticatedUser(result.user,result.csrf_token);
+        else showAuthGate(authError?"Login Google belum berhasil. Periksa konfigurasi OAuth lalu coba lagi.":"");
+      }).catch(error=>showAuthGate(error.message));
     }
     function setupSubjects() {
       const options=subjects.map(subject=>'<option value="'+subject.id+'">'+escapeHtml(subject.name)+'</option>').join("");
@@ -726,12 +1098,6 @@
       state.friends.push({id,name}); input.value=""; document.getElementById("friend-alias").value="";
       save(); renderStats(); toast(name+" ditambahkan berdasarkan ID akun.");
     });
-    document.getElementById("profile-form").addEventListener("submit",event=>{
-      event.preventDefault();
-      const name=document.getElementById("profile-name").value.trim();
-      if(!name)return toast("Nama tampilan tidak boleh kosong.");
-      state.name=name; save(); renderStats(); toast("Profil berhasil disimpan.");
-    });
     document.getElementById("copy-account-id").addEventListener("click",async()=>{
       try {
         await navigator.clipboard.writeText(state.accountId);
@@ -798,25 +1164,38 @@
       const subjectId=document.getElementById("game-subject").value;
       if(!subjects.some(subject=>subject.id===subjectId))return toast("Pilih mata pelajaran duel yang tersedia.");
       const opponent=selectedMode==="bot"?"Bot "+ranks[botTier]:"Pemain demo";
-      game={mode:selectedMode,tier:botTier,opponent,subjectId,round:0,player:0,other:0,playerStreak:0,otherStreak:0,answeredPlayer:false,answeredOther:false,questionWinner:null,advancing:false,goldenRound:false,question:null,recentQuestions:[]};
-      document.getElementById("arena-select").style.display="none"; document.getElementById("game-area").style.display="block"; nextQuestion();
+      game={mode:selectedMode,tier:botTier,opponent,subjectId,round:0,player:0,other:0,playerStreak:0,otherStreak:0,answeredPlayer:false,answeredOther:false,questionWinner:null,advancing:false,goldenRound:false,question:null,recentQuestions:[],questionQueue:[],bufferController:null,bufferPromise:null,bufferError:null,questionController:null};
+      document.getElementById("arena-select").style.display="none";
+      document.getElementById("game-area").style.display="block";
+      prepareInitialQuestionBuffer(game);
     }
-    async function getQuestion(subjectId,tier,signal,recentQuestions=game.recentQuestions.slice(-12)) {
+    async function getQuestionBatch(subjectId,tier,signal,recentQuestions=[]) {
       if(!subjects.some(subject=>subject.id===subjectId))throw new Error("Mapel soal tidak dikenal.");
-      const generated=await apiPost("/api/questions",{
+      const generated=await apiPost("/api/questions/batch",{
         subject_id:subjectId,
         rank:ranks[tier],
+        count:10,
         recent_questions:recentQuestions
       },signal);
-      if(generated.subjectId!==subjectId)throw new Error("Soal AI tidak cocok dengan mapel yang dipilih.");
-      if(typeof generated.q!=="string"||!Array.isArray(generated.a)||generated.a.length!==4||
-        generated.a.some(answer=>typeof answer!=="string")||
-        !Number.isInteger(generated.c)||generated.c<0||generated.c>=generated.a.length) {
-        throw new Error("Format soal dari AI tidak valid. Coba buat soal lagi.");
+      if(!Array.isArray(generated.questions)||generated.questions.length!==10) {
+        throw new Error("AI harus mengirim tepat 10 soal. Coba siapkan paket lagi.");
       }
-      return generated;
+      const questions=generated.questions;
+      const seen=new Set();
+      for(const question of questions) {
+        if(question.subjectId!==subjectId||typeof question.q!=="string"||
+          !Array.isArray(question.a)||question.a.length!==4||
+          question.a.some(answer=>typeof answer!=="string")||
+          !Number.isInteger(question.c)||question.c<0||question.c>=question.a.length) {
+          throw new Error("Format salah satu soal AI tidak valid. Coba siapkan paket lagi.");
+        }
+        const key=question.q.trim().toLocaleLowerCase();
+        if(seen.has(key))throw new Error("Paket AI berisi soal berulang. Coba siapkan paket lagi.");
+        seen.add(key);
+      }
+      return questions;
     }
-    function clearGameTimers(preservePrefetch=false) {
+    function clearGameTimers(stopBuffer=false) {
       if(!game)return;
       clearInterval(game.clockInterval);
       clearTimeout(game.playerTimeout);
@@ -826,48 +1205,99 @@
         game.questionController.abort();
         game.questionController=null;
       }
-      if(!preservePrefetch&&game.prefetchedQuestion) {
-        game.prefetchedQuestion.controller.abort();
-        game.prefetchedQuestion=null;
+      if(stopBuffer&&game.bufferController) {
+        game.bufferController.abort();
+        game.bufferController=null;
       }
+    }
+    function showQuestionBufferMessage(activeGame,message) {
+      const area=document.getElementById("game-area");
+      const subject=subjects.find(item=>item.id===activeGame.subjectId);
+      area.innerHTML='<article class="card"><div class="game-top"><span class="badge green">SOAL CADANGAN · '+escapeHtml(subject.name)+'</span><button class="text-link" id="leave-game">Keluar</button></div><p class="small ai-thinking" role="status"><span>'+escapeHtml(message)+'</span><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></p></article>';
+      area.querySelector("#leave-game").addEventListener("click",leaveGame);
+    }
+    function showQuestionBufferError(activeGame,error,retryInitial=false) {
+      if(game!==activeGame)return;
+      const area=document.getElementById("game-area");
+      area.innerHTML='<article class="card"><div class="eyebrow">Soal belum tersedia</div><h2>Belum bisa menyiapkan soal</h2><p class="small">'+escapeHtml(error.message)+'</p><div class="row"><button class="btn" id="retry-question">Coba lagi</button><button class="btn secondary" id="leave-game">Kembali ke arena</button></div></article>';
+      area.querySelector("#retry-question").addEventListener("click",()=>{
+        if(retryInitial)prepareInitialQuestionBuffer(activeGame);
+        else nextQuestion();
+      });
+      area.querySelector("#leave-game").addEventListener("click",leaveGame);
+    }
+    async function prepareInitialQuestionBuffer(activeGame) {
+      if(game!==activeGame)return;
+      const controller=new AbortController();
+      activeGame.bufferController=controller;
+      showQuestionBufferMessage(activeGame,"AI sedang membuat 10 soal awal. Pertandingan mulai setelah semuanya siap.");
+      try {
+        const questions=await getQuestionBatch(activeGame.subjectId,activeGame.tier,controller.signal);
+        if(game!==activeGame||controller.signal.aborted)return;
+        activeGame.questionQueue=questions;
+        activeGame.bufferController=null;
+        nextQuestion();
+      } catch(error) {
+        if(game!==activeGame||controller.signal.aborted)return;
+        activeGame.bufferController=null;
+        console.error("Gagal menyiapkan 10 soal awal:",error);
+        showQuestionBufferError(activeGame,error,true);
+      }
+    }
+    function refillQuestionBuffer(activeGame) {
+      if(game!==activeGame||activeGame.bufferPromise||activeGame.bufferController)return;
+      const controller=new AbortController();
+      activeGame.bufferController=controller;
+      const avoidQuestions=activeGame.recentQuestions.concat(
+        activeGame.questionQueue.map(question=>question.q)
+      ).slice(-20);
+      const promise=getQuestionBatch(
+        activeGame.subjectId,
+        activeGame.tier,
+        controller.signal,
+        avoidQuestions
+      ).then(questions=>{
+        if(game!==activeGame||controller.signal.aborted)return;
+        activeGame.questionQueue.push(...questions);
+        activeGame.bufferError=null;
+      }).catch(error=>{
+        if(game!==activeGame||controller.signal.aborted)return;
+        activeGame.bufferError=error;
+        console.warn("Gagal mengisi ulang soal cadangan:",error);
+      }).finally(()=>{
+        if(activeGame.bufferController===controller)activeGame.bufferController=null;
+        if(activeGame.bufferPromise===promise)activeGame.bufferPromise=null;
+      });
+      activeGame.bufferPromise=promise;
     }
     async function nextQuestion() {
       if(!game)return;
-      clearGameTimers(true);
+      clearGameTimers();
       const activeGame=game;
-      const round=++activeGame.round;
       const area=document.getElementById("game-area");
       const subject=subjects.find(item=>item.id===activeGame.subjectId);
-      const prefetch=activeGame.prefetchedQuestion&&activeGame.prefetchedQuestion.round===round?activeGame.prefetchedQuestion:null;
-      if(activeGame.prefetchedQuestion&&!prefetch) {
-        activeGame.prefetchedQuestion.controller.abort();
-        activeGame.prefetchedQuestion=null;
-      }
-      if(prefetch)activeGame.prefetchedQuestion=null;
-      area.innerHTML='<article class="card"><div class="game-top"><span class="badge green">'+(prefetch?"MEMUAT SOAL BERIKUTNYA · ":"MENYIAPKAN SOAL · ")+escapeHtml(subject.name)+'</span><button class="text-link" id="leave-game">Keluar</button></div><p class="small ai-thinking" role="status"><span>'+(prefetch?"Soal berikutnya sedang disiapkan.":("AI sedang membuat soal baru khusus "+escapeHtml(subject.name)+" untuk rank "+escapeHtml(ranks[activeGame.tier])+"."))+' Bot mulai menjawab setelah soal tampil.</span><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span></p></article>';
-      area.querySelector("#leave-game").addEventListener("click",leaveGame);
-      const controller=prefetch?prefetch.controller:new AbortController();
-      activeGame.questionController=controller;
-      try {
-        if(prefetch) {
-          const result=await prefetch.promise;
-          if(result.error)throw result.error;
-          activeGame.question=result.question;
-        } else {
-          activeGame.question=await getQuestion(activeGame.subjectId,activeGame.tier,controller.signal);
+      if(activeGame.questionQueue.length===0) {
+        if(!activeGame.bufferPromise) {
+          if(activeGame.bufferController)return;
+          activeGame.bufferError=null;
+          refillQuestionBuffer(activeGame);
         }
-      } catch(error) {
-        if(game!==activeGame||controller.signal.aborted)return;
-        activeGame.round--;
-        console.error("Gagal membuat soal AI:",error);
-        area.innerHTML='<article class="card"><div class="eyebrow">Soal belum tersedia</div><h2>Belum bisa membuat soal</h2><p class="small">'+escapeHtml(error.message)+'</p><div class="row"><button class="btn" id="retry-question">Coba lagi</button><button class="btn secondary" id="leave-game">Kembali ke arena</button></div></article>';
-        area.querySelector("#retry-question").addEventListener("click",nextQuestion);
-        area.querySelector("#leave-game").addEventListener("click",leaveGame);
-        return;
-      } finally {
-        if(activeGame.questionController===controller)activeGame.questionController=null;
+        showQuestionBufferMessage(activeGame,"Memuat soal cadangan. Jawaban sebelumnya sudah selesai—sebentar lagi lanjut.");
+        if(activeGame.bufferPromise)await activeGame.bufferPromise;
+        if(game!==activeGame)return;
+        if(activeGame.questionQueue.length===0) {
+          showQuestionBufferError(
+            activeGame,
+            activeGame.bufferError||new Error("Paket soal belum tersedia. Coba lagi."),
+            false
+          );
+          return;
+        }
       }
-      if(game!==activeGame||activeGame.round!==round)return;
+      if(game!==activeGame)return;
+      activeGame.bufferError=null;
+      activeGame.question=activeGame.questionQueue.shift();
+      const round=++activeGame.round;
       activeGame.recentQuestions.push(activeGame.question.q);
       game.answerOrder=game.question.a.map((_,i)=>i).sort(()=>Math.random()-.5);
       game.answeredPlayer=false; game.answeredOther=false; game.questionWinner=null; game.advancing=false; game.timeLeft=8;
@@ -877,17 +1307,7 @@
       area.querySelector("#leave-game").addEventListener("click",leaveGame);
       area.querySelectorAll("[data-answer]").forEach(btn=>btn.addEventListener("click",()=>submitAnswer(Number(btn.dataset.answer),btn)));
       startQuestionRace();
-      prefetchNextQuestion(game);
-    }
-    function prefetchNextQuestion(activeGame) {
-      if(activeGame.prefetchedQuestion||activeGame.round>=25)return;
-      const controller=new AbortController();
-      const round=activeGame.round+1;
-      const recentQuestions=activeGame.recentQuestions.slice(-12);
-      const promise=getQuestion(activeGame.subjectId,activeGame.tier,controller.signal,recentQuestions)
-        .then(question=>({question}))
-        .catch(error=>({error}));
-      activeGame.prefetchedQuestion={round,controller,promise};
+      if(activeGame.questionQueue.length<=9)refillQuestionBuffer(activeGame);
     }
     function startQuestionRace() {
       const round=game.round;
@@ -956,7 +1376,6 @@
         game.playerStreak=0;
         document.getElementById("game-status").textContent=game.questionWinner==="other"?"Kurang tepat. Lawan sudah lebih dulu mendapat poin.":"Belum tepat. Lawan masih bisa merebut poin.";
       }
-      if(!game.answeredOther)resolveOpponentAnswer(false);
       document.getElementById("player-score").textContent=game.player;
       document.getElementById("other-score").textContent=game.other;
       const status=document.getElementById("game-status");
@@ -978,7 +1397,7 @@
     function checkRoundComplete() {
       if(!game||!game.answeredPlayer||!game.answeredOther||game.advancing)return;
       game.advancing=true;
-      clearGameTimers(true);
+      clearGameTimers();
       if(game.goldenRound) {
         if(game.questionWinner==="player")return finishGame("win");
         if(game.questionWinner==="other")return finishGame("loss");
@@ -1000,7 +1419,7 @@
       nextQuestion();
     }
     function finishGame(result) {
-      clearGameTimers();
+      clearGameTimers(true);
       const completed=game;
       let xp=completed.mode==="rank"?25:completed.mode==="fun"?20:15;
       let rankDelta=0;
@@ -1012,26 +1431,36 @@
       document.getElementById("game-area").innerHTML='<article class="card result"><div class="eyebrow">Pertandingan selesai · '+(completed.goldenRound?"Golden round · ":"")+completed.round+' soal · '+escapeHtml(subjects.find(subject=>subject.id===completed.subjectId).name)+'</div><h2>'+title+'</h2><p class="sub">'+completed.player+' — '+completed.other+' melawan '+escapeHtml(completed.opponent)+'</p><p class="small">'+detail+'</p><p class="small">Mulai soal ke-15, pertandingan selesai setelah unggul 2 poin dengan 2 jawaban benar beruntun. Jika belum ada pemenang setelah 25 soal, golden round dimulai: jawaban benar pertama menang.</p><button class="btn" id="again">Kembali ke arena</button></article>';
       document.getElementById("again").addEventListener("click",leaveGame);
     }
-    function leaveGame() { clearGameTimers(); game=null; document.getElementById("game-area").style.display="none"; document.getElementById("arena-select").style.display="block"; }
+    function leaveGame() { clearGameTimers(true); game=null; document.getElementById("game-area").style.display="none"; document.getElementById("arena-select").style.display="block"; }
     let boardMode="rank";
     document.querySelectorAll("[data-board]").forEach(btn=>btn.addEventListener("click",()=>{boardMode=btn.dataset.board;document.querySelectorAll("[data-board]").forEach(b=>b.classList.toggle("selected",b===btn));renderBoard();}));
-    function renderBoard() {
+    async function renderBoard() {
       const isRank=boardMode==="rank";
       document.getElementById("board-title").textContent="Top 100 · "+(isRank?"Rank":"Waktu belajar");
       document.getElementById("board-sub").textContent=isRank?"Pemain dengan poin rank tertinggi":"Pemain dengan waktu fokus terbanyak";
       document.getElementById("board-kind").textContent=isRank?"Rank":"Waktu";
-      const players=Array.from({length:100},(_,i)=>({name:["Naya","Raka","Bima","Salsa","Dito","Alya","Nino","Kirana","Fajar","Zara"][i%10]+(i>=10?" "+(Math.floor(i/10)+1):""),points:Math.max(0,720-i*7),minutes:Math.max(12,1800-i*17),level:Math.max(2,38-Math.floor(i/4))}));
-      const value=isRank?state.rankPoints:state.studyMinutes;
-      const me={name:state.name,points:value,minutes:value,level:level(),isMe:true};
-      const sorted=players.concat(me).sort((a,b)=>(isRank?b.points-a.points:b.minutes-a.minutes));
-      const myPosition=sorted.findIndex(p=>p.isMe)+1;
-      const top=sorted.slice(0,100);
-      const rows=top.map((p,i)=>'<tr class="'+(p.isMe?"me":"")+'"><td>'+(i+1)+'</td><td>'+(p.isMe?"★ ":"")+escapeHtml(p.name)+'</td><td>'+(isRank?'<span class="rank-label"><span class="rank-gem">◆</span>'+rankName(p.points)+'</span>':p.minutes+" mnt")+'</td><td>Lv. '+p.level+'</td></tr>');
-      if(myPosition>100) rows.push('<tr class="me"><td>'+myPosition+'</td><td>★ '+escapeHtml(me.name)+' · Posisi kamu</td><td>'+(isRank?'<span class="rank-label"><span class="rank-gem">◆</span>'+rankName(me.points)+'</span>':me.minutes+" mnt")+'</td><td>Lv. '+me.level+'</td></tr>');
-      document.getElementById("board-rows").innerHTML=rows.join("");
+      const rowsElement=document.getElementById("board-rows");
+      rowsElement.innerHTML='<tr><td colspan="4" class="small">Memuat leaderboard…</td></tr>';
+      try {
+        const result=await authRequest("/api/leaderboard?mode="+(isRank?"rank":"study"));
+        if(isRank!==(boardMode==="rank"))return;
+        if(!result.players.length) {
+          rowsElement.innerHTML='<tr><td colspan="4" class="small">Belum ada progres pemain untuk ditampilkan.</td></tr>';
+          return;
+        }
+        rowsElement.innerHTML=result.players.map((player,index)=>
+          '<tr><td>'+(index+1)+'</td><td>'+escapeHtml(player.name)+'</td><td>'+
+          (isRank?'<span class="rank-label"><span class="rank-gem">◆</span>'+escapeHtml(player.rank)+'</span>':player.study_minutes+" mnt")+
+          '</td><td>Lv. '+player.level+'</td></tr>'
+        ).join("");
+      } catch(error) {
+        console.error("Gagal memuat leaderboard:",error);
+        rowsElement.innerHTML='<tr><td colspan="4" class="small">'+escapeHtml(error.message)+'</td></tr>';
+      }
     }
     setupSubjects();
     renderStats();
+    setupAuth();
   </script>
 </body>
 </html>

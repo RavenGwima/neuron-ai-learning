@@ -9,7 +9,7 @@ Neuron is an AI-assisted learning app. Tutor replies and duel questions are gene
 3. Double-click `start-neuron.bat`. On first run it creates `.env` from `.env.example` and opens it so you can set `OPENROUTER_API_KEY` to the replacement key. Tutor chat uses `openai/gpt-6-luna`; question generation uses `deepseek/deepseek-v4.1-flash-1017`. Keep the `:batch` suffix off these models: Batch requests are asynchronous and can take up to 24 hours, so they are not suitable for live chat or quiz questions.
 4. Open `http://127.0.0.1:8000` and leave the server window open while using the app. Do not use the `file:///.../index.html` URL for AI features.
 
-The server uses only the Python standard library. Do not publish `.env` or expose the local development server to the public internet. The current ranked/fun opponents and leaderboards remain local simulations; real multiplayer needs a separate authenticated matchmaking service.
+The server uses only the Python standard library. Do not publish `.env` or expose the local development server to the public internet. Ranked/fun opponents are still local simulations; real human multiplayer needs a separate authenticated matchmaking service. Account XP, rank, study time, and streak are synchronized to SQLite. Admins can set any account's level and rank from the account panel; all admin accounts are excluded server-side from both leaderboards.
 
 ## Deploy on SnapDeploy
 
@@ -17,11 +17,16 @@ The public source repository is [RavenGwima/neuron-ai-learning](https://github.c
 
 1. Sign in to [SnapDeploy](https://snapdeploy.dev/register), connect GitHub, and deploy `RavenGwima/neuron-ai-learning` from the `main` branch.
 2. Set `OPENROUTER_API_KEY` as a secret in SnapDeploy. Optionally set `OPENROUTER_CHAT_MODEL` and `OPENROUTER_QUESTION_MODEL`; defaults are in `.env.example`. Never commit `.env` or paste a key into the Dockerfile. Revoke any key previously shared in chat and use a replacement.
-3. Keep the free Small container. SnapDeploy supplies `HOST` and `PORT`; the container listens on the supplied port. Check `/api/health` on the generated `containers.snapdeploy.app` URL and confirm `configured` is `true`.
+3. To bootstrap your admin account, set `NEURON_ADMIN_EMAIL` and `NEURON_ADMIN_PASSWORD` as private secrets. Use your own email and a unique password with at least 12 characters. The configured email is promoted to admin, and its password is synchronized from the secret at startup; changing the secret rotates the password. Do not share or commit either value.
+4. Google sign-in is optional. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `PUBLIC_APP_URL` (the exact public HTTPS app URL). Add this exact redirect URI in Google Cloud OAuth settings: `<PUBLIC_APP_URL>/api/auth/google/callback`.
+5. If SnapDeploy provides persistent volumes, mount one and set `NEURON_DB_PATH` to a SQLite file inside that mount (for example, `/data/neuron.sqlite3`). Without a persistent mount, accounts and sessions stored in the container filesystem may be lost when the service is replaced. Do not promise durable accounts until the volume is verified.
+6. Keep the free Small container. SnapDeploy supplies `HOST` and `PORT`; the container listens on the supplied port. Check `/api/health` on the generated `containers.snapdeploy.app` URL and confirm `configured` is `true`.
+
+The app supports guest and email/password accounts; Google sign-in only appears as available when all OAuth secrets are configured. Country selection controls AI tutor and question language. Human ranked/fun matchmaking and filtering opponents by country are not implemented yet; those arena opponents are still local simulations.
 
 The free tier provides up to 100 running hours per month across the account. A container sleeps after about 15 minutes without visits and may take about a minute to wake; Always-On hosting is paid. See [SnapDeploy pricing](https://snapdeploy.dev/pricing) and [environment variable documentation](https://snapdeploy.dev/docs/environment-variables).
 
-In the arena, the next AI question is requested while the current question is open; after you answer, it appears immediately if ready, otherwise the AI thinking indicator remains visible. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
+In the arena, the app generates a batch of 10 questions before starting, then replenishes the question buffer while the match runs. The bot answers on its own timer rather than waiting for the player. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
 
 LaTeX in tutor replies and AI-generated questions is rendered by MathJax from jsDelivr, so formula rendering requires an internet connection.
 
