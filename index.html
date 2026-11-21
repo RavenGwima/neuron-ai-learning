@@ -1218,21 +1218,6 @@
       }
       return questions;
     }
-    async function getQuestion(subjectId,tier,signal,recentQuestions=[]) {
-      if(!subjects.some(subject=>subject.id===subjectId))throw new Error("Mapel soal tidak dikenal.");
-      const question=await apiPost("/api/questions",{
-        subject_id:subjectId,
-        rank:ranks[tier],
-        recent_questions:recentQuestions
-      },signal);
-      if(question.subjectId!==subjectId||typeof question.q!=="string"||
-        !Array.isArray(question.a)||question.a.length!==4||
-        question.a.some(answer=>typeof answer!=="string")||
-        !Number.isInteger(question.c)||question.c<0||question.c>=question.a.length) {
-        throw new Error("Format soal AI tidak valid. Coba siapkan soal lagi.");
-      }
-      return question;
-    }
     function clearGameTimers(stopBuffer=false) {
       if(!game)return;
       clearInterval(game.clockInterval);
@@ -1268,15 +1253,15 @@
       if(game!==activeGame)return;
       const controller=new AbortController();
       activeGame.bufferController=controller;
-      showQuestionBufferMessage(activeGame,"AI sedang menyiapkan soal pertama. Cadangan soal dibuat sambil bermain.");
+      showQuestionBufferMessage(activeGame,"AI sedang membuat 10 soal awal. Pertandingan mulai setelah semuanya siap.");
       try {
-        const question=await getQuestion(
+        const questions=await getQuestionBatch(
           activeGame.subjectId,
           activeGame.tier,
           controller.signal
         );
         if(game!==activeGame||controller.signal.aborted)return;
-        activeGame.questionQueue=[question];
+        activeGame.questionQueue=questions;
         activeGame.bufferController=null;
         nextQuestion();
       } catch(error) {
@@ -1352,47 +1337,58 @@
       if(activeGame.questionQueue.length<=9)refillQuestionBuffer(activeGame);
     }
     function startQuestionRace() {
-      const round=game.round;
-      game.questionStartedAt=Date.now();
-      game.clockInterval=setInterval(()=>{
-        if(!game||game.round!==round||game.answeredPlayer)return;
-        game.timeLeft=Math.max(0,game.timeLeft-1);
+      const activeGame=game;
+      const round=activeGame.round;
+      activeGame.questionStartedAt=Date.now();
+      activeGame.clockInterval=setInterval(()=>{
+        if(game!==activeGame||activeGame.round!==round||activeGame.answeredPlayer)return;
+        activeGame.timeLeft=Math.max(0,activeGame.timeLeft-1);
         const countdown=document.getElementById("race-countdown");
-        if(countdown)countdown.textContent=game.timeLeft;
-        if(game.timeLeft===0)resolvePlayerTimeout();
+        if(countdown)countdown.textContent=activeGame.timeLeft;
+        if(activeGame.timeLeft===0)resolvePlayerTimeout(activeGame,round);
       },1000);
-      game.playerTimeout=setTimeout(resolvePlayerTimeout,8000);
-      const botDelay=game.mode==="bot"?botResponseTimes[game.tier]:900+Math.random()*800;
-      game.opponentDeadline=game.questionStartedAt+botDelay;
-      game.botTimeout=setTimeout(resolveOpponentAnswer,botDelay);
+      activeGame.playerTimeout=setTimeout(()=>resolvePlayerTimeout(activeGame,round),8000);
+      const botDelay=activeGame.mode==="bot"?botResponseTimes[activeGame.tier]:900+Math.random()*800;
+      activeGame.opponentDeadline=activeGame.questionStartedAt+botDelay;
+      activeGame.botTimeout=setTimeout(()=>resolveOpponentAnswer(activeGame,round),botDelay);
     }
-    function resolvePlayerTimeout() {
-      if(!game||game.answeredPlayer)return;
-      game.answeredPlayer=true; game.playerStreak=0;
-      clearInterval(game.clockInterval);
+    function resolvePlayerTimeout(activeGame,round) {
+      if(!activeGame||game!==activeGame||activeGame.round!==round||activeGame.answeredPlayer)return;
+      activeGame.answeredPlayer=true; activeGame.playerStreak=0;
+      clearInterval(activeGame.clockInterval);
       document.querySelectorAll(".answer").forEach(button=>button.disabled=true);
-      document.getElementById("game-status").textContent=game.questionWinner==="other"?"Waktu habis—bot sudah lebih dulu meraih poin.":"Waktu habis. Tidak ada poin untuk jawabanmu.";
+      document.getElementById("game-status").textContent=activeGame.questionWinner==="other"?"Waktu habis—bot sudah lebih dulu meraih poin.":"Waktu habis. Tidak ada poin untuk jawabanmu.";
       checkRoundComplete();
     }
-    function resolveOpponentAnswer(advance=true) {
-      if(!game||game.answeredOther)return;
-      game.answeredOther=true;
-      const botChance=botCorrectRates[game.tier];
+    function resolveOpponentAnswer(activeGame,round,advance=true) {
+      if(!activeGame||game!==activeGame||activeGame.round!==round||activeGame.answeredOther)return;
+      activeGame.answeredOther=true;
+      const botChance=botCorrectRates[activeGame.tier];
       const correct=Math.random()<botChance;
+      const wrongAnswers=activeGame.question.a
+        .map((_,index)=>index)
+        .filter(index=>index!==activeGame.question.c);
+      const answerIndex=correct
+        ?activeGame.question.c
+        :wrongAnswers[Math.floor(Math.random()*wrongAnswers.length)];
+      const answerText=activeGame.question.a[answerIndex];
+      const answerTime=((Date.now()-activeGame.questionStartedAt)/1000).toFixed(1);
       if(correct) {
-        game.otherStreak++;
-        if(!game.questionWinner) {
-          game.other++; game.questionWinner="other";
-          document.getElementById("game-status").textContent=game.opponent+" lebih cepat dan mendapat poin! Kamu masih bisa menjawab sebelum waktu habis.";
+        activeGame.otherStreak++;
+        if(!activeGame.questionWinner) {
+          activeGame.other++; activeGame.questionWinner="other";
+          document.getElementById("game-status").textContent=activeGame.opponent+" menjawab “"+answerText+"” dengan benar dalam "+answerTime+" dtk dan mendapat poin! Kamu masih bisa menjawab sebelum waktu habis.";
+        } else if(activeGame.questionWinner==="player") {
+          document.getElementById("game-status").textContent=activeGame.opponent+" juga menjawab benar dalam "+answerTime+" dtk, tetapi kamu lebih cepat—poin tetap milikmu.";
         }
       } else {
-        game.otherStreak=0;
-        if(!game.questionWinner)document.getElementById("game-status").textContent=game.opponent+" menjawab salah—kejar poin sebelum waktunya habis!";
+        activeGame.otherStreak=0;
+        if(!activeGame.questionWinner)document.getElementById("game-status").textContent=activeGame.opponent+" memilih “"+answerText+"” (salah) dalam "+answerTime+" dtk—kejar poin sebelum waktunya habis!";
       }
-      document.getElementById("other-score").textContent=game.other;
-      document.getElementById("opponent-state").textContent=correct?"Lawan sudah menjawab":"Lawan salah menjawab";
+      document.getElementById("other-score").textContent=activeGame.other;
+      document.getElementById("opponent-state").textContent=(correct?"Benar":"Salah")+" · "+answerTime+" dtk";
       document.querySelector(".race-clock").classList.add("done");
-      if(advance&&game.goldenRound&&correct&&game.questionWinner==="other") {
+      if(advance&&activeGame.goldenRound&&correct&&activeGame.questionWinner==="other") {
         finishGame("loss");
         return;
       }
@@ -1400,9 +1396,11 @@
     }
     function submitAnswer(choice,button) {
       if(!game||game.answeredPlayer)return;
-      game.answeredPlayer=true;
-      clearTimeout(game.playerTimeout); clearInterval(game.clockInterval);
-      if(!game.answeredOther&&Date.now()>=game.opponentDeadline)resolveOpponentAnswer(false);
+      const activeGame=game;
+      const round=activeGame.round;
+      activeGame.answeredPlayer=true;
+      clearTimeout(activeGame.playerTimeout); clearInterval(activeGame.clockInterval);
+      if(!activeGame.answeredOther&&Date.now()>=activeGame.opponentDeadline)resolveOpponentAnswer(activeGame,round,false);
       const correct=game.answerOrder[choice]===game.question.c;
       document.querySelectorAll(".answer").forEach(answer=>answer.disabled=true);
       button.classList.add(correct?"correct":"wrong");

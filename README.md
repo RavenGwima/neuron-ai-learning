@@ -26,7 +26,7 @@ The app supports guest and email/password accounts; Google sign-in only appears 
 
 The free tier provides up to 100 running hours per month across the account. A container sleeps after about 15 minutes without visits and may take about a minute to wake; Always-On hosting is paid. See [SnapDeploy pricing](https://snapdeploy.dev/pricing) and [environment variable documentation](https://snapdeploy.dev/docs/environment-variables).
 
-In the arena, the app generates one question first so the match can start sooner, then builds a 10-question reserve in the background while the match runs. The bot answers on its own timer rather than waiting for the player. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
+In the arena, the app prepares 10 questions before the match starts. As soon as play begins, it generates the next 10 in the background; when that reserve is consumed, it keeps preparing another 10 until the match ends. The bot answers on its own timer; only the first correct answer per question gets that question's point. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
 
 LaTeX in tutor replies and AI-generated questions is rendered by MathJax from jsDelivr, so formula rendering requires an internet connection.
 
