@@ -559,8 +559,14 @@
         throw new Error("Server AI tidak terjangkau. Periksa koneksi internet atau coba lagi.");
       }
       let result;
-      try { result=await response.json(); }
-      catch(error) { throw new Error("Server AI mengirim respons yang tidak dapat dibaca."); }
+      try { result=JSON.parse(await response.text()); }
+      catch(error) {
+        if(!response.ok&&response.status===503) {
+          throw new Error("Server Neuron sedang bangun setelah tidak aktif. Tunggu sekitar satu menit, lalu coba lagi.");
+        }
+        if(!response.ok)throw new Error("Server AI tidak merespons dengan benar (HTTP "+response.status+"). Coba lagi.");
+        throw new Error("Server AI mengirim respons yang tidak dapat dibaca.");
+      }
       if(!response.ok)throw new Error(result.error||"Permintaan AI gagal (HTTP "+response.status+").");
       return result;
     }
