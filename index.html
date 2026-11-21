@@ -1218,6 +1218,21 @@
       }
       return questions;
     }
+    async function getQuestion(subjectId,tier,signal,recentQuestions=[]) {
+      if(!subjects.some(subject=>subject.id===subjectId))throw new Error("Mapel soal tidak dikenal.");
+      const question=await apiPost("/api/questions",{
+        subject_id:subjectId,
+        rank:ranks[tier],
+        recent_questions:recentQuestions
+      },signal);
+      if(question.subjectId!==subjectId||typeof question.q!=="string"||
+        !Array.isArray(question.a)||question.a.length!==4||
+        question.a.some(answer=>typeof answer!=="string")||
+        !Number.isInteger(question.c)||question.c<0||question.c>=question.a.length) {
+        throw new Error("Format soal AI tidak valid. Coba siapkan soal lagi.");
+      }
+      return question;
+    }
     function clearGameTimers(stopBuffer=false) {
       if(!game)return;
       clearInterval(game.clockInterval);
@@ -1253,11 +1268,15 @@
       if(game!==activeGame)return;
       const controller=new AbortController();
       activeGame.bufferController=controller;
-      showQuestionBufferMessage(activeGame,"AI sedang membuat 10 soal awal. Pertandingan mulai setelah semuanya siap.");
+      showQuestionBufferMessage(activeGame,"AI sedang menyiapkan soal pertama. Cadangan soal dibuat sambil bermain.");
       try {
-        const questions=await getQuestionBatch(activeGame.subjectId,activeGame.tier,controller.signal);
+        const question=await getQuestion(
+          activeGame.subjectId,
+          activeGame.tier,
+          controller.signal
+        );
         if(game!==activeGame||controller.signal.aborted)return;
-        activeGame.questionQueue=questions;
+        activeGame.questionQueue=[question];
         activeGame.bufferController=null;
         nextQuestion();
       } catch(error) {
