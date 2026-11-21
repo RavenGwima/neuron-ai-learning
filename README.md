@@ -21,7 +21,7 @@ The public source repository is [RavenGwima/neuron-ai-learning](https://github.c
 
 The deployed service reads Render's `PORT` and `RENDER_EXTERNAL_URL` environment variables. Rotate any API key previously shared in chat before adding the replacement as a Render secret.
 
-In the arena, the next AI question is requested while the current question is open and appears as soon as the answer resolves. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
+In the arena, the next AI question is requested while the current question is open; after you answer, it appears immediately if ready, otherwise the AI thinking indicator remains visible. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
 
 LaTeX in tutor replies and AI-generated questions is rendered by MathJax from jsDelivr, so formula rendering requires an internet connection.
 
