@@ -11,15 +11,15 @@ Neuron is an AI-assisted learning app. Tutor replies and duel questions are gene
 
 The server uses only the Python standard library. Do not publish `.env` or expose the local development server to the public internet. The current ranked/fun opponents and leaderboards remain local simulations; real multiplayer needs a separate authenticated matchmaking service.
 
-## Deploy publicly
+## Deploy on SnapDeploy
 
-The public source repository is [RavenGwima/neuron-ai-learning](https://github.com/RavenGwima/neuron-ai-learning). GitHub Pages cannot run the Python API, so deploy the complete app (frontend and API) as a Render web service using the included `render.yaml`:
+The public source repository is [RavenGwima/neuron-ai-learning](https://github.com/RavenGwima/neuron-ai-learning). SnapDeploy builds the app from this repository with the included `Dockerfile`; GitHub is the source repository, not the web host.
 
-1. Open [Deploy to Render](https://render.com/deploy?repo=https://github.com/RavenGwima/neuron-ai-learning) and connect your GitHub account.
-2. Set `OPENROUTER_API_KEY` as a secret when prompted. Never commit `.env` or paste the key into `render.yaml`.
-3. Open the public `onrender.com` URL after Render finishes deploying. The free instance may sleep when idle and take a little time to wake up.
+1. Sign in to [SnapDeploy](https://snapdeploy.dev/register), connect GitHub, and deploy `RavenGwima/neuron-ai-learning` from the `main` branch.
+2. Set `OPENROUTER_API_KEY` as a secret in SnapDeploy. Optionally set `OPENROUTER_CHAT_MODEL` and `OPENROUTER_QUESTION_MODEL`; defaults are in `.env.example`. Never commit `.env` or paste a key into the Dockerfile. Revoke any key previously shared in chat and use a replacement.
+3. Keep the free Small container. SnapDeploy supplies `HOST` and `PORT`; the container listens on the supplied port. Check `/api/health` on the generated `containers.snapdeploy.app` URL and confirm `configured` is `true`.
 
-The deployed service reads Render's `PORT` and `RENDER_EXTERNAL_URL` environment variables. Rotate any API key previously shared in chat before adding the replacement as a Render secret.
+The free tier provides up to 100 running hours per month across the account. A container sleeps after about 15 minutes without visits and may take about a minute to wake; Always-On hosting is paid. See [SnapDeploy pricing](https://snapdeploy.dev/pricing) and [environment variable documentation](https://snapdeploy.dev/docs/environment-variables).
 
 In the arena, the next AI question is requested while the current question is open; after you answer, it appears immediately if ready, otherwise the AI thinking indicator remains visible. After 15 questions a player wins by leading by 2 points with a 2-answer correct streak. If nobody qualifies after 25 questions, the game enters Golden Round; the first correct answer wins.
 
