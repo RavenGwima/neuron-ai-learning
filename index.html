@@ -625,22 +625,45 @@
       if(!window.MathJax||typeof window.MathJax.typesetPromise!=="function")return;
       window.MathJax.typesetPromise([element]).catch(error=>console.warn("LaTeX tidak dapat dirender:",error));
     }
+    async function waitForApiReady(signal) {
+      const deadline=Date.now()+90000;
+      while(Date.now()<deadline) {
+        await new Promise(resolve=>setTimeout(resolve,2500));
+        try {
+          const response=await fetch("/api/health",{cache:"no-store",signal});
+          if(response.ok)return;
+        } catch(error) {
+          if(error.name==="AbortError")throw error;
+        }
+      }
+      throw new Error("Server Neuron belum siap setelah 90 detik. Coba lagi.");
+    }
     async function apiPost(path,payload,signal) {
       if(location.protocol==="file:") {
         throw new Error("Halaman masih dibuka langsung dari file. Jalankan start-neuron.bat, lalu buka http://127.0.0.1:8000.");
       }
       let response;
-      try {
-        response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal});
-      } catch(error) {
-        if(error.name==="AbortError")throw error;
-        throw new Error("Server AI tidak terjangkau. Periksa koneksi internet atau coba lagi.");
+      const sendRequest=async()=>{
+        try {
+          return await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal});
+        } catch(error) {
+          if(error.name==="AbortError")throw error;
+          throw new Error("Server AI tidak terjangkau. Periksa koneksi internet atau coba lagi.");
+        }
+      };
+      response=await sendRequest();
+      if(response.status===503&&response.headers.get("X-Wake-Page")==="true") {
+        await waitForApiReady(signal);
+        response=await sendRequest();
       }
       let result;
       try { result=JSON.parse(await response.text()); }
       catch(error) {
         if(!response.ok&&response.status===503) {
-          throw new Error("Server Neuron sedang bangun setelah tidak aktif. Tunggu sekitar satu menit, lalu coba lagi.");
+          if(response.headers.get("X-Wake-Page")==="true") {
+            throw new Error("Server Neuron masih belum siap. Tunggu sebentar, lalu coba lagi.");
+          }
+          throw new Error("Server AI sementara tidak tersedia (HTTP 503). Coba lagi.");
         }
         if(!response.ok)throw new Error("Server AI tidak merespons dengan benar (HTTP "+response.status+"). Coba lagi.");
         throw new Error("Server AI mengirim respons yang tidak dapat dibaca.");
