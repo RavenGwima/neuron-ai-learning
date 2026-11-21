@@ -74,9 +74,9 @@ def load_dotenv():
 def openrouter_messages(messages, model_setting, json_mode=False):
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     model = os.environ.get(model_setting, "").strip() or DEFAULT_MODELS.get(model_setting, "")
-    if not api_key or not model:
+    if not api_key or api_key.startswith("isi_dengan_") or not model:
         raise RuntimeError(
-            "Server belum dikonfigurasi. Isi OPENROUTER_API_KEY dan {} di file .env.".format(model_setting)
+            "Server belum dikonfigurasi. Isi OPENROUTER_API_KEY dan {} melalui environment server.".format(model_setting)
         )
     if model.endswith(":batch"):
         raise RuntimeError(
